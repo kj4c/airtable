@@ -1,29 +1,31 @@
-import AppLayout from "~/components/ui/app-layout";
-import { BaseBox } from "~/components/ui/base-box";
-import { Button } from "~/components/ui/button";
+import Link from "next/link";
 
-export default function BasePage() {
+// import { LatestPost } from "~/app/_components/post";
+import { auth } from "~/server/auth";
+import { AuthButton } from "~/components/ui/auth-button";
+import { api, HydrateClient } from "~/trpc/server";
+
+export default async function Home() {
+  const session = await auth();
+
+
   return (
-    <AppLayout>
-      <h1 className="text-2xl font-bold mb-4">Home</h1>
-      <Button
-        className="cursor-pointer px-6 py-3 text-l bg-blue-600 text-white hover:bg-blue-700 transition-colors"
-      >
-        Create a Base
-      </Button>
-      {/* Load all the base matching this user*/}
-      <div className="flex flex-wrap gap-4 mt-4">
-        <BaseBox name="Untitled Base"/>
-        <BaseBox name="Untitled Base"/>
-        <BaseBox name="Untitled Base"/>
-        <BaseBox name="Untitled Base"/>
-        <BaseBox name="Untitled Base"/>
-        <BaseBox name="Untitled Base"/>
-        <BaseBox name="Untitled Base"/>
-        <BaseBox name="Untitled Base"/>
-        <BaseBox name="Untitled Base"/>
-        <BaseBox name="Untitled Base"/>
-      </div>
-    </AppLayout>
+    <HydrateClient>
+      <main className="flex min-h-screen flex-col items-center justify-center">
+        <div className="container flex flex-col items-center justify-center px-4">
+          <h1 className="">
+            <img src="/logo-text.png"></img>
+          </h1>
+          <div className="flex flex-col items-center justify-center">
+            <p className="text-center text-2xl">
+              {session && <span>Logged in as {session.user?.name}</span>}
+            </p>
+            <AuthButton />
+          </div>
+
+          {/* {session?.user && <LatestPost />} */}
+        </div>
+      </main>
+    </HydrateClient>
   );
 }

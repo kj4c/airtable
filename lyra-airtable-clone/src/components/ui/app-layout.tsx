@@ -35,7 +35,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         >
           <nav className="p-4 flex flex-col gap-3 text-sm">
             <Button className="cursor-pointer bg-transparent text-black w-full justify-start text-lg hover:bg-gray-300">Home</Button>
-            <Button className="cursor-pointer bg-transparent text-black w-full justify-start text-lg hover:bg-gray-300">All Workspace</Button>
+            <Button className="cursor-pointer bg-transparent text-black w-full justify-start text-lg hover:bg-gray-300">All Workspaces</Button>
           </nav>
         </aside>
 
