@@ -16,6 +16,7 @@ type Props = {
 export default function BaseDashboard() {
   const params = useParams<{ baseId: string }>();
   const { baseId } = params;
+  const [baseName, setBaseName] = useState("");
   const [selectedTableId, setSelectedTableId] = useState<string | null>(null);
 
   // 1. Fetch all tables for this base

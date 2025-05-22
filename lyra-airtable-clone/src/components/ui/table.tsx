@@ -73,12 +73,14 @@ export function DataTable<TData>({ columns, data, tableId }: DataTableProps<TDat
   })
 
   return (
-    <div className="overflow-x-auto border rounded-md">
+    <div className="overflow-x-auto border">
       <table className="min-w-full divide-y divide-gray-200">
         <thead className="bg-gray-50">
           {table.getHeaderGroups().map(headerGroup => (
             // get the columns 
             <tr key={headerGroup.id}>
+							<th className="w-20">
+							</th>
             	{headerGroup.headers.map(header => (
                 <th key={header.id} className="px-4 py-2 text-left text-sm font-semibold text-black border-2">
                 	{flexRender(header.column.columnDef.header, header.getContext())}
@@ -112,7 +114,7 @@ export function DataTable<TData>({ columns, data, tableId }: DataTableProps<TDat
 											/>
 											<DropdownMenu>
 												<DropdownMenuTrigger
-													className="w-full px-3 py-2 text-sm text-left text-gray-500 border-2 rounded-md"
+													className="w-full px-3 py-2 text-sm text-left text-black border-2 rounded-md"
 												>{capitalizeFirstLetter(type)}</DropdownMenuTrigger>
 												<DropdownMenuContent>
 													<DropdownMenuItem onClick={() => setType("text")}>Text</DropdownMenuItem>
@@ -129,9 +131,12 @@ export function DataTable<TData>({ columns, data, tableId }: DataTableProps<TDat
 														});
 														setColumnName("");
 														setType("text");
+														setOpen(false);
 													}
 												}}
+												className="text-white"
 											>
+												Create column
 											</Button>
 									</DialogContent>
 								</Dialog>
@@ -143,7 +148,11 @@ export function DataTable<TData>({ columns, data, tableId }: DataTableProps<TDat
         <tbody className="bg-white divide-y divide-gray-100">
             {table.getRowModel().rows.map(row => (
 							// display the rows
+							// put number 
 							<tr key={row.id}>
+								<td className="px-4 py-2 h-10 border-2 text-sm text-gray-900">
+									{row.index + 1}
+								</td>
 									{row.getVisibleCells().map(cell => (
 										<td key={cell.id} className="px-4 py-2 h-10 border-2 text-sm text-gray-900">
 												{flexRender(cell.column.columnDef.cell, cell.getContext())}
@@ -152,7 +161,7 @@ export function DataTable<TData>({ columns, data, tableId }: DataTableProps<TDat
 							</tr>
             ))}
 						<tr>
-	            <td colSpan={columns.length + 1} className="px-4 py-2">
+	            <td colSpan={columns.length + 1} className="">
               <Button
                 onClick={() => {
                   createRow.mutate({
@@ -160,9 +169,9 @@ export function DataTable<TData>({ columns, data, tableId }: DataTableProps<TDat
                   });
                 }}
 								size="icon"
-								className="w-20 flex items-center justify-center hover:bg-white/10 group cursor-pointer"
+								className="w-20 rounded-none flex items-center justify-center border-r-2 border-l-2 border-b-2 bg-white hover:bg-gray-50 text-black group cursor-pointer"
               >
-								<Plus className="text-gray-500 group-hover:text-black transition-colors" />
+								<Plus className="text-gray-500 transition-colors" />
               </Button>
             </td>						
 						</tr>
