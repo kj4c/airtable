@@ -3,7 +3,7 @@
 import { z } from "zod";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import { db } from "~/server/db";
-import { bases } from "~/server/db/schema";
+import { bases, tables } from "~/server/db/schema";
 
 // each thing is an endpoint, protectprocedure means auth needed.
 //ctx.session.user.id is given by user id
@@ -39,4 +39,40 @@ export const baseRouter = createTRPCRouter({
       where: (bases, { eq }) => eq(bases.userId, ctx.session.user.id),
     });
   }),
+
+  getTables: protectedProcedure
+    .input(
+      z.object({
+        baseId: z.string(),
+      })
+    )
+    .query(async ({ input }) => {
+      const { baseId } = input;
+      // get all tables for this base
+      const tablesList = await db.query.tables.findMany({
+        where: (tables, { eq }) => eq(tables.baseId, baseId),
+        // only return the id and name columns
+        columns: { id: true, name: true },
+      });
+      return tablesList;
+    }),
+
+  createTable: protectedProcedure
+    .input(
+      z.object({
+        baseId: z.string(),
+        name: z.string().min(1),
+      })
+    )
+    .mutation(async ({ input }) => {
+      const { baseId, name } = input;
+
+      // create a new table in the database
+      const newTable = await db.insert(tables).values({
+        baseId: baseId,
+        name: name,
+      }).returning();
+
+      return newTable[0];
+    }),
 });

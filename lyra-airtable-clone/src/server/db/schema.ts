@@ -63,16 +63,24 @@ export const tables = pgTable("table", (d) => ({
   baseId: d.uuid().notNull().references(() => bases.id),
 }));
 
+export const views = pgTable("view", (d) => ({
+  id: d.uuid().primaryKey().defaultRandom(),
+  name: d.varchar({ length: 255 }).notNull(),
+  tableId: d.uuid().notNull().references(() => tables.id),
+}));
+
 export const columns = pgTable("column", (d) => ({
   id: d.uuid().primaryKey().defaultRandom(),
   name: d.varchar({ length: 255 }).notNull(),
   type: d.varchar({ length: 20 }).notNull(), // "text" | "number"
   tableId: d.uuid().notNull().references(() => tables.id),
+  order: d.integer().notNull().default(0),
 }));
 
 export const rows = pgTable("row", (d) => ({
   id: d.uuid().primaryKey().defaultRandom(),
   tableId: d.uuid().notNull().references(() => tables.id),
+  order: d.integer().notNull().default(0),
 }));
 
 export const cells = pgTable("cell", (d) => ({

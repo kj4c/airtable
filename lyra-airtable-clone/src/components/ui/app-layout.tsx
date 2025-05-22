@@ -16,12 +16,14 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           <Button
             variant="ghost"
             size={"icon"}
-            className="hover:bg-white/10 group"
+            className="hover:bg-white/10 group cursor-pointer"
             onClick={() => setSidebarOpen((prev) => !prev)}
           >
             <Menu className="!w-5 !h-5 text-gray-500 group-hover:text-black transition-colors" />
           </Button>
-          <img className="h-16" src="logo-side.png"></img>
+          <Link href="/">
+            <img className="h-16" src="logo-side.png"></img>
+          </Link>
         </div>
         <AuthButton />
       </header>

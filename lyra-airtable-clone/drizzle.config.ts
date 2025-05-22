@@ -8,5 +8,5 @@ export default {
   dbCredentials: {
     url: env.DATABASE_URL,
   },
-  tablesFilter: ["lyra-airtable-clone_*"],
+  tablesFilter: ["column", "row"],
 } satisfies Config;

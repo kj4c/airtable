@@ -15,8 +15,7 @@ import {
 } from "~/components/ui/dialog";
 import { api } from "~/trpc/react";
 import { useSession } from "next-auth/react";
-
-
+import Link from "next/link";
 
 export default function BasePage() {
   const [open, setOpen] = useState(false);
@@ -31,9 +30,12 @@ export default function BasePage() {
       setBaseName("");
       setOpen(false);
       setError("");
-      await refetch();
+      void refetch();
     },
   });
+
+  const createTableMutation = api.base.createTable.useMutation();
+
 
   const { data: session, status } = useSession();
   if (status === "loading") {
@@ -54,7 +56,7 @@ export default function BasePage() {
 
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
-            <Button className="bg-blue-600 text-white hover:bg-blue-700"
+            <Button className="bg-blue-600 text-white hover:bg-blue-700 cursor-pointer"
               onClick={() => {
                 setError("");
               }}
@@ -75,8 +77,14 @@ export default function BasePage() {
             <Button
               onClick={() => {
                 if (baseName.trim()) {
-                  // pass in the name to the api which then uses Z to validate and collect
-                  createBase.mutate({ name: baseName });
+                  createBase.mutateAsync({ name: baseName }).then((base) => {
+                    if (base?.id) {
+                      createTableMutation.mutateAsync({
+                        baseId: base.id,
+                        name: "Table 1",
+                      });
+                    }
+                  });
                 } else {
                   setError("Base name cannot be empty");
                 }
@@ -93,7 +101,9 @@ export default function BasePage() {
 
       <div className="flex flex-wrap gap-4 mt-4">
         {userBases?.map((base) => (
-          <BaseBox key={base.id} name={base.name} />
+          <Link href={`/base/${base.id}`} key={base.id}>
+            <BaseBox key={base.id} name={base.name} />
+          </Link>
         ))}
       </div>
     </AppLayout>
