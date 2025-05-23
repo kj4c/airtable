@@ -47,6 +47,7 @@ export function generateColumns(columns: DBColumn[]): ColumnDef<RowData>[] {
   }));
 }
 
+// need to cache, pass the useQuery data to the table
 export function generateRows(rows: DBRow[], cols: DBColumn[], cells: DBCell[]): RowData[] {
   return rows.map((row) => {
     const cellData = cells.filter((cell) => cell.rowId === row.id);

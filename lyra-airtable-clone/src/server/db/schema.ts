@@ -1,6 +1,7 @@
 import { relations, sql } from "drizzle-orm";
-import { index, pgTable, primaryKey } from "drizzle-orm/pg-core";
+import { index, pgTable, primaryKey, unique } from "drizzle-orm/pg-core";
 import { type AdapterAccount } from "next-auth/adapters";
+import { d } from "node_modules/drizzle-kit/index-BAUrj6Ib.mjs";
 
 /**
  * This is an example of how to use the multi-project schema feature of Drizzle ORM. Use the same
@@ -83,9 +84,14 @@ export const rows = pgTable("row", (d) => ({
   order: d.integer().notNull().default(0),
 }));
 
-export const cells = pgTable("cell", (d) => ({
-  id: d.uuid().primaryKey().defaultRandom(),
-  value: d.text(), // everything stored as string
-  rowId: d.uuid().notNull().references(() => rows.id),
-  columnId: d.uuid().notNull().references(() => columns.id),
-}));
+export const cells = pgTable("cell", (d) => {
+  return {
+    id: d.uuid("id").primaryKey().defaultRandom(),
+    value: d.text("value"),
+    rowId: d.uuid("rowId").notNull().references(() => rows.id),
+    columnId: d.uuid("columnId").notNull().references(() => columns.id),
+  };
+}, (t) => [
+  unique().on(t.rowId, t.columnId),
+]);
+

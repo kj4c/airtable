@@ -83,7 +83,11 @@ export const tableRouter = createTRPCRouter({
             rowId,
             columnId,
             value,
-        }).returning();
+        }).onConflictDoUpdate({
+            target: [cells.rowId, cells.columnId],
+            set: { value },
+        })
+        .returning();
 
         return newCell[0];
     }),
@@ -98,6 +102,7 @@ export const tableRouter = createTRPCRouter({
     .query(async ({ input }) => {
         const { tableId } = input;
         
+        // convert to tanstack within here.
         const columnsData = await db.query.columns.findMany({
             where: (columns, { eq }) => eq(columns.tableId, tableId),
         });

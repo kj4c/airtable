@@ -1,6 +1,6 @@
 "use client";
 
-import { DataTable } from "~/components/ui/table";
+import { DataTable } from "~/app/_components/table";
 import { api } from "~/trpc/react";
 import { generateColumns, generateRows } from "./data";
 import { DataTableClient } from "./data-table-client";
@@ -21,8 +21,12 @@ export default function BaseDashboard() {
 
   // 1. Fetch all tables for this base
   const {data: baseData, error, isLoading} = api.base.getTables.useQuery({
-    baseId: params.baseId,
-  });
+      baseId: baseId
+    },
+    {
+      enabled: !!baseId, // this makes it so that the table runs only if the baseId is not null
+    }
+  );
 
   useEffect(() => {
     const firstTable = baseData?.[0];

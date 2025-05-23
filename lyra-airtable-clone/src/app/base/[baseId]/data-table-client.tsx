@@ -2,7 +2,7 @@
 
 import { generateColumns, generateRows } from "./data";
 import { useMemo } from "react";
-import { DataTable } from "~/components/ui/table";
+import { DataTable } from "~/app/_components/table";
 
 type DBColumn = {
     order: number;
@@ -33,7 +33,6 @@ type Props = {
 };
 
 export function DataTableClient({ columns, rows, cells, tableId }: Props) {
-  console.log("AIUDHAIUWDHAIWDHAW");
   const columnDefs = useMemo(() => generateColumns(columns), [columns]); 
   const rowData = generateRows(rows, columns, cells);
 

@@ -8,7 +8,7 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import React from "react";
-import { Button } from "./button";
+import { Button } from "../../components/ui/button";
 import { api } from "~/trpc/react";
 import {
 	Dialog,
@@ -26,8 +26,9 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "~/components/ui/dropdown-menu"
-import { Input } from "./input";
+import { Input } from "../../components/ui/input";
 import { Plus } from "lucide-react";
+import { EditableCell } from "./editable-cell";
 
 // define the type of the data, TData is a generic type
 type DataTableProps<TData> = {
@@ -73,20 +74,22 @@ export function DataTable<TData>({ columns, data, tableId }: DataTableProps<TDat
   })
 
   return (
-    <div className="overflow-x-auto border">
-      <table className="min-w-full divide-y divide-gray-200">
+    <div className="overflow-x-auto border box-border">
+
+      <table className="min-w-max divide-y divide-gray-200 table-fixed box-border border-separate border-spacing-0">
         <thead className="bg-gray-50">
           {table.getHeaderGroups().map(headerGroup => (
             // get the columns 
             <tr key={headerGroup.id}>
-							<th className="w-20">
+							<th>
 							</th>
             	{headerGroup.headers.map(header => (
-                <th key={header.id} className="px-4 py-2 text-left text-sm font-semibold text-black border-2">
+                <th key={header.id} className="px-4 py-2 text-left text-sm font-semibold text-black border-1 w-[150px] truncate ">
                 	{flexRender(header.column.columnDef.header, header.getContext())}
                 </th>
               ))}
-							<th className=" text-left text-sm font-semibold text-black border-2 w-[60px]">
+							{/* Add column for the plus button */}
+							<th className="text-left text-sm font-semibold text-black border-2 w-[60px]">
 								<Dialog open={open} onOpenChange={setOpen}>
 									<DialogTrigger asChild>
 										<Button
@@ -114,7 +117,7 @@ export function DataTable<TData>({ columns, data, tableId }: DataTableProps<TDat
 											/>
 											<DropdownMenu>
 												<DropdownMenuTrigger
-													className="w-full px-3 py-2 text-sm text-left text-black border-2 rounded-md"
+													className="w-full px-3 py-2 text-sm text-left text-black border-1 rounded-md"
 												>{capitalizeFirstLetter(type)}</DropdownMenuTrigger>
 												<DropdownMenuContent>
 													<DropdownMenuItem onClick={() => setType("text")}>Text</DropdownMenuItem>
@@ -150,13 +153,15 @@ export function DataTable<TData>({ columns, data, tableId }: DataTableProps<TDat
 							// display the rows
 							// put number 
 							<tr key={row.id}>
-								<td className="px-4 py-2 h-10 border-2 text-sm text-gray-900">
+								<td className="px-4 py-2 h-10 border-1 text-sm text-gray-900 w-10 overflow-x-auto">
 									{row.index + 1}
 								</td>
 									{row.getVisibleCells().map(cell => (
-										<td key={cell.id} className="px-4 py-2 h-10 border-2 text-sm text-gray-900">
-												{flexRender(cell.column.columnDef.cell, cell.getContext())}
-										</td>
+										<EditableCell
+											key={cell.id}
+											cell={cell}
+											tableId={tableId}
+										/>
 									))}
 							</tr>
             ))}
@@ -169,7 +174,7 @@ export function DataTable<TData>({ columns, data, tableId }: DataTableProps<TDat
                   });
                 }}
 								size="icon"
-								className="w-20 rounded-none flex items-center justify-center border-r-2 border-l-2 border-b-2 bg-white hover:bg-gray-50 text-black group cursor-pointer"
+								className="w-20 rounded-none flex items-center justify-center border-1 border-b-2 bg-white hover:bg-gray-50 text-black group cursor-pointer"
               >
 								<Plus className="text-gray-500 transition-colors" />
               </Button>
