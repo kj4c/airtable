@@ -4,6 +4,7 @@ import { z } from "zod";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import { db } from "~/server/db";
 import { cells, columns, rows } from "~/server/db/schema";
+import { generateColumns, generateRows } from "./data";
 
 export const tableRouter = createTRPCRouter({
     // mutation means to create data and not a query
@@ -139,10 +140,12 @@ export const tableRouter = createTRPCRouter({
             })
             : [];
 
+        const columnDefs = generateColumns(columnsForTable);
+        const rowData = generateRows(rowsForTable, columnsForTable, cellsForTable);
+
         return {
-            rows: rowsForTable,
-            columns: columnsForTable,
-            cells: cellsForTable,
+            columns: columnDefs,
+            data: rowData,
         };
     }),
 

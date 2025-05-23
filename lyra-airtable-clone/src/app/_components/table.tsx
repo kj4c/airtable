@@ -89,13 +89,13 @@ export function DataTable<TData>({ columns, data, tableId }: DataTableProps<TDat
                 </th>
               ))}
 							{/* Add column for the plus button */}
-							<th className="text-left text-sm font-semibold text-black border-2 w-[60px]">
+							<th className="text-left text-sm flex items-center justify-center font-semibold text-black border-1 w-[60px]">
 								<Dialog open={open} onOpenChange={setOpen}>
 									<DialogTrigger asChild>
 										<Button
 											variant="ghost"
 											size="icon"
-											className="w-20 flex items-center justify-center hover:bg-white/10 group cursor-pointer"
+											className="flex items-center justify-center hover:bg-white/10 group cursor-pointer"
 										>   
 										<Plus className="text-gray-500 group-hover:text-black transition-colors" />
 										</Button>
@@ -109,6 +109,7 @@ export function DataTable<TData>({ columns, data, tableId }: DataTableProps<TDat
 										</DialogHeader>
 											<Input
 												placeholder="Column name"
+												className="cursor-pointer"
 												onChange={(e) => {
 													setColumnName(e.target.value);
 													}
@@ -117,7 +118,7 @@ export function DataTable<TData>({ columns, data, tableId }: DataTableProps<TDat
 											/>
 											<DropdownMenu>
 												<DropdownMenuTrigger
-													className="w-full px-3 py-2 text-sm text-left text-black border-1 rounded-md"
+													className="w-full px-3 py-2 text-sm text-left text-black border-1 rounded-md cursor-pointer hover:bg-gray-100 transition-colors group"
 												>{capitalizeFirstLetter(type)}</DropdownMenuTrigger>
 												<DropdownMenuContent>
 													<DropdownMenuItem onClick={() => setType("text")}>Text</DropdownMenuItem>
@@ -137,7 +138,7 @@ export function DataTable<TData>({ columns, data, tableId }: DataTableProps<TDat
 														setOpen(false);
 													}
 												}}
-												className="text-white"
+												className="text-white cursor-pointer"
 											>
 												Create column
 											</Button>
@@ -153,7 +154,7 @@ export function DataTable<TData>({ columns, data, tableId }: DataTableProps<TDat
 							// display the rows
 							// put number 
 							<tr key={row.id}>
-								<td className="px-4 py-2 h-10 border-1 text-sm text-gray-900 w-10 overflow-x-auto">
+								<td className="flex items-center justify-center h-10 border-1 border-box text-sm text-gray-900 w-10">
 									{row.index + 1}
 								</td>
 									{row.getVisibleCells().map(cell => (
@@ -167,18 +168,18 @@ export function DataTable<TData>({ columns, data, tableId }: DataTableProps<TDat
             ))}
 						<tr>
 	            <td colSpan={columns.length + 1} className="">
-              <Button
-                onClick={() => {
-                  createRow.mutate({
-                    tableId: tableId
-                  });
-                }}
-								size="icon"
-								className="w-20 rounded-none flex items-center justify-center border-1 border-b-2 bg-white hover:bg-gray-50 text-black group cursor-pointer"
-              >
-								<Plus className="text-gray-500 transition-colors" />
-              </Button>
-            </td>						
+								<Button
+									onClick={() => {
+										createRow.mutate({
+											tableId: tableId
+										});
+									}}
+									size="icon"
+									className="w-10 rounded-none flex items-center justify-center border-1 bg-white hover:bg-gray-50 text-black group cursor-pointer"
+								>
+									<Plus className="text-gray-500 transition-colors" />
+								</Button>
+            	</td>						
 						</tr>
         </tbody>
       </table>

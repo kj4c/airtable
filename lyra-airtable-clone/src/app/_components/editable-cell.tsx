@@ -21,7 +21,6 @@ export const EditableCell = ({ cell, tableId }: { cell: any; tableId: string }) 
     onMutate: async (newCell) => {
       setIsEditing(false);
       
-      
       // Cancel any outgoing refetches to avoid race conditions
       await utils.table.getTableData.cancel();
       
@@ -41,7 +40,7 @@ export const EditableCell = ({ cell, tableId }: { cell: any; tableId: string }) 
         (oldData: any) => {
           if (!oldData) return oldData;
 
-          const newRows = oldData.rows.map((row: any) => {
+          const newData = oldData.data.map((row: any) => {
             if (row.id !== newCell.rowId) return row;
             return {
               ...row,
@@ -49,14 +48,11 @@ export const EditableCell = ({ cell, tableId }: { cell: any; tableId: string }) 
             };
           });
 
-          console.log('New rows:', newRows);
 
-          return { ...oldData, rows: newRows };
+          return { ...oldData, data: newData };
         }
       );
-
-      // console.log("oops");
-
+      
       return { previous };
     },
 

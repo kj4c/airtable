@@ -2,7 +2,7 @@
 
 import { DataTable } from "~/app/_components/table";
 import { api } from "~/trpc/react";
-import { generateColumns, generateRows } from "./data";
+import { generateColumns, generateRows } from "../../../server/api/routers/data";
 import { DataTableClient } from "./data-table-client";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -46,9 +46,8 @@ export default function BaseDashboard() {
   }
   );
   
-  const rows = tableData?.rows ?? [];
   const columns = tableData?.columns ?? [];
-  const cells = tableData?.cells ?? [];
+  const data = tableData?.data ?? [];
 
   return (
     <div className="p-6">
@@ -73,10 +72,9 @@ export default function BaseDashboard() {
       </div>
 
       {selectedTableId && (
-        <DataTableClient
+        <DataTable
           columns={columns}
-          rows={rows}
-          cells={cells}
+          data={data}
           tableId={selectedTableId}
         />
       )}

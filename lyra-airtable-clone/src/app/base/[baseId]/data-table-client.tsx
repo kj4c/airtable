@@ -1,6 +1,6 @@
 "use client";
 
-import { generateColumns, generateRows } from "./data";
+import { generateColumns, generateRows } from "../../../server/api/routers/data";
 import { useMemo } from "react";
 import { DataTable } from "~/app/_components/table";
 
