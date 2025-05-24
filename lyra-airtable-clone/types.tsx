@@ -1,4 +1,4 @@
 export type RowData = {
   id: string;
-  [key: string]: string;
+  [key: string]: string | number;
 };

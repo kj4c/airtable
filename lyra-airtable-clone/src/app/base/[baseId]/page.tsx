@@ -2,19 +2,10 @@
 
 import { DataTable } from "~/app/_components/table";
 import { api } from "~/trpc/react";
-import {
-  generateColumns,
-  generateRows,
-} from "../../../server/api/routers/data";
-import { DataTableClient } from "./data-table-client";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
-
-type Props = {
-  params: {
-    baseId: string;
-  };
-};
+import type { ColumnDef } from "@tanstack/react-table";
+import type { RowData } from "types";
 
 export default function BaseDashboard() {
   const params = useParams<{ baseId: string }>();

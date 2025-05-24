@@ -1,5 +1,6 @@
 // helper function to convert columns to TanStack Columns
 import { type ColumnDef } from "@tanstack/react-table";
+import type { RowData } from "types.tsx";
 
 type DBColumn = {
   order: number;
@@ -22,7 +23,6 @@ type DBCell = {
   columnId: string;
 };
 
-type RowData = Record<string, string>;
 
 export function generateColumns(columns: DBColumn[]): ColumnDef<RowData>[] {
   return columns
