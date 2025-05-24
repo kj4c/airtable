@@ -16,15 +16,13 @@ export default async function Home() {
       </header>
       <main className="flex flex-col items-center justify-center">
         <div className="container flex flex-col items-center justify-center px-4">
-          <h1 className="">
             <img src="/logo-text.png"></img>
-          </h1>
           <div className="flex flex-col items-center justify-center">
             {session && (
               <Link href={`/home`}>
                 <Button
                   variant="link"
-                  className="h-14 bg-blue-600 text-2xl text-white hover:bg-blue-700"
+                  className="h-14 bg-blue-600 text-2xl text-white hover:bg-blue-700 cursor-pointer"
                 >
                   {`View ${session.user.name} Bases`}
                 </Button>

@@ -7,12 +7,14 @@ import { useEffect, useState } from "react";
 import type { ColumnDef } from "@tanstack/react-table";
 import type { RowData } from "types";
 import BaseLayout from "~/components/ui/base-layout";
+import { Button } from "~/components/ui/button";
 
 export default function BaseDashboard() {
   const params = useParams<{ baseId: string }>();
   const { baseId } = params;
   const [baseName, setBaseName] = useState("");
   const [selectedTableId, setSelectedTableId] = useState<string | null>(null);
+  const utils = api.useUtils();
 
   // get base name
   const baseNamedata = api.base.getBaseName.useQuery(
@@ -29,6 +31,16 @@ export default function BaseDashboard() {
       setBaseName(baseNamedata.data);
     }
   }, [baseNamedata.data]);
+
+  // add new table
+  const createTable = api.base.createTable.useMutation({
+    onSuccess: async (newTable) => {
+      if (newTable) {
+        setSelectedTableId(newTable.id);
+      }
+      await utils.base.getTables.invalidate();
+    },
+  });
 
   // 1. Fetch all tables for this base
   const {
@@ -73,25 +85,31 @@ export default function BaseDashboard() {
 
   return (
     <BaseLayout baseName={baseName}>
-      <div className="p-6">
-        <h1 className="mb-4 text-2xl font-bold">
-          {baseData?.find((t) => t.id === selectedTableId)?.name ?? "Loading..."}
-        </h1>
-
-        <div className="mb-4 flex gap-2">
-          {baseData?.map((t) => (
-            <button
-              key={t.id}
-              onClick={() => setSelectedTableId(t.id)}
-              className={`rounded px-4 py-2 ${
-                selectedTableId === t.id
-                  ? "bg-blue-500 text-white"
-                  : "bg-gray-200 hover:bg-gray-300"
-              }`}
+      <div className="">
+        <div className="mb-4 flex bg-green-800 w-full">
+          <div className="ml-2">
+            {baseData?.map((t) => (
+              <button
+                key={t.id}
+                onClick={() => setSelectedTableId(t.id)}
+                className={`rounded-t-xs px-4 py-1 text-sm cursor-pointer bg-green-800 ${
+                  selectedTableId === t.id
+                    ? "bg-white text-black"
+                    : "bg-gray-200 hover:bg-green-900"
+                }`}
+              >
+                {t.name}
+              </button>
+            ))}
+            <button className="bg-transparent cursor-pointer text-sm ml-2"
+              onClick={() => createTable.mutate({ 
+                name: `Table ${(baseData?.length ?? 0) + 1}`,
+                baseId: baseId 
+              })}
             >
-              {t.name}
+              + Add or import
             </button>
-          ))}
+          </div>
         </div>
 
         {selectedTableId && (

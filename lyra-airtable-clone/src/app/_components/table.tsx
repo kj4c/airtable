@@ -173,18 +173,23 @@ export function DataTable({
             </tr>
           ))}
           <tr>
-            <td colSpan={columns.length + 1} className="">
-              <Button
-                onClick={() => {
-                  createRow.mutate({
-                    tableId: tableId,
-                  });
-                }}
-                size="icon"
-                className="group flex w-10 cursor-pointer items-center justify-center rounded-none border-1 bg-white text-black hover:bg-gray-50"
-              >
-                <Plus className="text-gray-500 transition-colors" />
-              </Button>
+            <td colSpan={columns.length + 1} className="w-[200px]">
+              <div className="flex items-center space-x-2">
+                <Button
+                  onClick={() => {
+                    createRow.mutate({
+                      tableId: tableId,
+                    });
+                  }}
+                  size="icon"
+                  className="w-10 cursor-pointer items-center justify-center rounded-none bg-white text-black hover:bg-gray-50 shadow-none"
+                >
+                  <Plus className="text-gray-500 transition-colors" />
+                </Button>
+                <Button className="ml-2 h-2 bg-white text-black hover:bg-gray-50 cursor-pointer">
+                  Add 100k rows
+                </Button>
+              </div>
             </td>
           </tr>
         </tbody>

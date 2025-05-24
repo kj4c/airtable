@@ -1,8 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { Button } from "~/components/ui/button";
-import { Menu } from "lucide-react";
 import Link from "next/link";
 import { AuthButton } from "~/components/ui/auth-button";
 
@@ -11,7 +9,7 @@ export default function BaseLayout({ children, baseName }: { children: React.Rea
 
   return (
     <div className="flex min-h-screen flex-col">
-      <header className="sticky top-0 z-50 flex h-14 items-center justify-between border-b bg-green-800 px-1 shadow-sm">
+      <header className="sticky top-0 z-50 flex h-14 items-center justify-between bg-green-700 px-1">
         <div className="flex items-center min-w-[60px]">
           <Link href="/home">
             <img className="h-[22px] ml-5 mr-4" src="/airtable-transparent.png"></img>
@@ -23,7 +21,7 @@ export default function BaseLayout({ children, baseName }: { children: React.Rea
 
       <div className="flex flex-1">
         {/* Main content */}
-        <main className="bg-muted/40 flex-1 overflow-auto p-6">{children}</main>
+        <main className="bg-white flex-1 overflow-auto">{children}</main>
       </div>
     </div>
   );
