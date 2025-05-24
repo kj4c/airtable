@@ -7,7 +7,7 @@ import { bases, tables } from "~/server/db/schema";
 
 // each thing is an endpoint, protectprocedure means auth needed.
 //ctx.session.user.id is given by user id
-// db is the postgresql, uses drizzle 
+// db is the postgresql, uses drizzle
 export const baseRouter = createTRPCRouter({
   // mutation means to create data and not a query
   createBase: protectedProcedure
@@ -16,22 +16,25 @@ export const baseRouter = createTRPCRouter({
       z.object({
         // min one character so non empty
         name: z.string().min(1),
-      })
+      }),
     )
     .mutation(async ({ input, ctx }) => {
       const userId = ctx.session.user.id;
 
       // values should match the schema of the table
-      const newBase = await db.insert(bases).values({
-        name: input.name,
-        userId,
-      }).returning();
+      const newBase = await db
+        .insert(bases)
+        .values({
+          name: input.name,
+          userId,
+        })
+        .returning();
 
       return newBase[0];
     }),
 
   // retrieve all bases for the user
-  getAll: protectedProcedure.query( async ({ ctx }) => {
+  getAll: protectedProcedure.query(async ({ ctx }) => {
     // basically a select statement and find within the table where the user id is the same as the logged in user
     return await db.query.bases.findMany({
       // where fuynction takes in the schema reference (which is bases) and { eq } is a helper function
@@ -44,7 +47,7 @@ export const baseRouter = createTRPCRouter({
     .input(
       z.object({
         baseId: z.string(),
-      })
+      }),
     )
     .query(async ({ input }) => {
       const { baseId } = input;
@@ -62,16 +65,19 @@ export const baseRouter = createTRPCRouter({
       z.object({
         baseId: z.string(),
         name: z.string().min(1),
-      })
+      }),
     )
     .mutation(async ({ input }) => {
       const { baseId, name } = input;
 
       // create a new table in the database
-      const newTable = await db.insert(tables).values({
-        baseId: baseId,
-        name: name,
-      }).returning();
+      const newTable = await db
+        .insert(tables)
+        .values({
+          baseId: baseId,
+          name: name,
+        })
+        .returning();
 
       return newTable[0];
     }),

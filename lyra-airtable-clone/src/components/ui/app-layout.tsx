@@ -10,16 +10,16 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
-    <div className="flex flex-col min-h-screen">
-      <header className="h-14 flex items-center justify-between px-1 bg-white border-b shadow-sm sticky top-0 z-50">
+    <div className="flex min-h-screen flex-col">
+      <header className="sticky top-0 z-50 flex h-14 items-center justify-between border-b bg-white px-1 shadow-sm">
         <div className="flex items-center gap-2">
           <Button
             variant="ghost"
             size={"icon"}
-            className="hover:bg-white/10 group cursor-pointer"
+            className="group cursor-pointer hover:bg-white/10"
             onClick={() => setSidebarOpen((prev) => !prev)}
           >
-            <Menu className="!w-5 !h-5 text-gray-500 group-hover:text-black transition-colors" />
+            <Menu className="!h-5 !w-5 text-gray-500 transition-colors group-hover:text-black" />
           </Button>
           <Link href="/">
             <img className="h-16" src="logo-side.png"></img>
@@ -31,20 +31,22 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       <div className="flex flex-1">
         {/* Sidebar */}
         <aside
-          className={`bg-white border-r transition-all duration-300 ${
+          className={`border-r bg-white transition-all duration-300 ${
             sidebarOpen ? "w-64" : "w-0 overflow-hidden"
           }`}
         >
-          <nav className="p-4 flex flex-col gap-3 text-sm">
-            <Button className="cursor-pointer bg-transparent text-black w-full justify-start text-lg hover:bg-gray-300">Home</Button>
-            <Button className="cursor-pointer bg-transparent text-black w-full justify-start text-lg hover:bg-gray-300">All Workspaces</Button>
+          <nav className="flex flex-col gap-3 p-4 text-sm">
+            <Button className="w-full cursor-pointer justify-start bg-transparent text-lg text-black hover:bg-gray-300">
+              Home
+            </Button>
+            <Button className="w-full cursor-pointer justify-start bg-transparent text-lg text-black hover:bg-gray-300">
+              All Workspaces
+            </Button>
           </nav>
         </aside>
 
         {/* Main content */}
-        <main className="flex-1 p-6 bg-muted/40 overflow-auto">
-          {children}
-        </main>
+        <main className="bg-muted/40 flex-1 overflow-auto p-6">{children}</main>
       </div>
     </div>
   );

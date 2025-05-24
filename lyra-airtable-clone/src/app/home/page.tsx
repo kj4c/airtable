@@ -36,7 +36,6 @@ export default function BasePage() {
 
   const createTableMutation = api.base.createTable.useMutation();
 
-
   const { data: session, status } = useSession();
   if (status === "loading") {
     return <div>Loading...</div>;
@@ -44,19 +43,19 @@ export default function BasePage() {
 
   // if no session, redirect to home page
   if (!session) {
-    window.location.href ="/";
+    window.location.href = "/";
     return null;
   }
 
   return (
     <AppLayout>
-      
-      <div className="flex items-center justify-between mb-4">
+      <div className="mb-4 flex items-center justify-between">
         <h1 className="text-2xl font-bold">Home</h1>
 
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
-            <Button className="bg-blue-600 text-white hover:bg-blue-700 cursor-pointer"
+            <Button
+              className="cursor-pointer bg-blue-600 text-white hover:bg-blue-700"
               onClick={() => {
                 setError("");
               }}
@@ -67,7 +66,9 @@ export default function BasePage() {
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Create a New Base</DialogTitle>
-              <DialogDescription>Enter the name of your base below.</DialogDescription>
+              <DialogDescription>
+                Enter the name of your base below.
+              </DialogDescription>
             </DialogHeader>
             <Input
               value={baseName}
@@ -75,31 +76,29 @@ export default function BasePage() {
               placeholder="Base name"
             />
             <Button
-              onClick={() => {
-                if (baseName.trim()) {
-                  createBase.mutateAsync({ name: baseName }).then((base) => {
-                    if (base?.id) {
-                      createTableMutation.mutateAsync({
-                        baseId: base.id,
-                        name: "Table 1",
-                      });
-                    }
+              onClick={async () => {
+                if (!baseName.trim()) return;
+
+                const base = await createBase.mutateAsync({ name: baseName });
+
+                if (base?.id) {
+                  await createTableMutation.mutateAsync({
+                    baseId: base.id,
+                    name: "Table 1",
                   });
-                } else {
-                  setError("Base name cannot be empty");
                 }
               }}
             >
               Create
             </Button>
-            <p className="text-red-500 mt-2 text-sm justify-center flex">
+            <p className="mt-2 flex justify-center text-sm text-red-500">
               {error}
             </p>
           </DialogContent>
         </Dialog>
       </div>
 
-      <div className="flex flex-wrap gap-4 mt-4">
+      <div className="mt-4 flex flex-wrap gap-4">
         {userBases?.map((base) => (
           <Link href={`/base/${base.id}`} key={base.id}>
             <BaseBox key={base.id} name={base.name} />

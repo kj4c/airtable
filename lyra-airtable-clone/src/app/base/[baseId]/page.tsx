@@ -2,7 +2,10 @@
 
 import { DataTable } from "~/app/_components/table";
 import { api } from "~/trpc/react";
-import { generateColumns, generateRows } from "../../../server/api/routers/data";
+import {
+  generateColumns,
+  generateRows,
+} from "../../../server/api/routers/data";
 import { DataTableClient } from "./data-table-client";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -20,12 +23,17 @@ export default function BaseDashboard() {
   const [selectedTableId, setSelectedTableId] = useState<string | null>(null);
 
   // 1. Fetch all tables for this base
-  const {data: baseData, error, isLoading} = api.base.getTables.useQuery({
-      baseId: baseId
+  const {
+    data: baseData,
+    error,
+    isLoading,
+  } = api.base.getTables.useQuery(
+    {
+      baseId: baseId,
     },
     {
       enabled: !!baseId, // this makes it so that the table runs only if the baseId is not null
-    }
+    },
   );
 
   useEffect(() => {
@@ -36,31 +44,36 @@ export default function BaseDashboard() {
   }, [baseData, selectedTableId]);
 
   // 2. Fetch columns and rows for the selected table
-  const { data: tableData, error: tableError, isLoading: tableLoading } = api.table.getTableData.useQuery({
-    tableId: selectedTableId ?? "",
-    offset: 0,
-    limit: 100,
-  },
-  {
-    enabled: !!selectedTableId, // this makes it so that the table runs only if the selectedTableId is not null
-  }
+  const {
+    data: tableData,
+    error: tableError,
+    isLoading: tableLoading,
+  } = api.table.getTableData.useQuery(
+    {
+      tableId: selectedTableId ?? "",
+      offset: 0,
+      limit: 100,
+    },
+    {
+      enabled: !!selectedTableId, // this makes it so that the table runs only if the selectedTableId is not null
+    },
   );
-  
+
   const columns = tableData?.columns ?? [];
   const data = tableData?.data ?? [];
 
   return (
     <div className="p-6">
-      <h1 className="text-2xl font-bold mb-4">
-        {baseData?.find(t => t.id === selectedTableId)?.name ?? "Loading..."}
+      <h1 className="mb-4 text-2xl font-bold">
+        {baseData?.find((t) => t.id === selectedTableId)?.name ?? "Loading..."}
       </h1>
 
-      <div className="flex gap-2 mb-4">
+      <div className="mb-4 flex gap-2">
         {baseData?.map((t) => (
           <button
             key={t.id}
             onClick={() => setSelectedTableId(t.id)}
-            className={`px-4 py-2 rounded ${
+            className={`rounded px-4 py-2 ${
               selectedTableId === t.id
                 ? "bg-blue-500 text-white"
                 : "bg-gray-200 hover:bg-gray-300"
@@ -72,11 +85,7 @@ export default function BaseDashboard() {
       </div>
 
       {selectedTableId && (
-        <DataTable
-          columns={columns}
-          data={data}
-          tableId={selectedTableId}
-        />
+        <DataTable columns={columns} data={data} tableId={selectedTableId} />
       )}
     </div>
   );

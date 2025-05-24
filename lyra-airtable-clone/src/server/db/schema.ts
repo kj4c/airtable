@@ -11,87 +11,130 @@ import { d } from "node_modules/drizzle-kit/index-BAUrj6Ib.mjs";
  */
 
 export const users = pgTable("user", (d) => ({
-  id: d.varchar({ length: 255 }).notNull().primaryKey().$defaultFn(() => crypto.randomUUID()),
+  id: d
+    .varchar({ length: 255 })
+    .notNull()
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
   name: d.varchar({ length: 255 }),
   email: d.varchar({ length: 255 }).notNull(),
-  emailVerified: d.timestamp({ mode: "date", withTimezone: true }).default(sql`CURRENT_TIMESTAMP`),
+  emailVerified: d
+    .timestamp({ mode: "date", withTimezone: true })
+    .default(sql`CURRENT_TIMESTAMP`),
   image: d.varchar({ length: 255 }),
 }));
 
-export const accounts = pgTable("account", (d) => ({
-  userId: d.varchar({ length: 255 }).notNull().references(() => users.id),
-  type: d.varchar({ length: 255 }).$type<AdapterAccount["type"]>().notNull(),
-  provider: d.varchar({ length: 255 }).notNull(),
-  providerAccountId: d.varchar({ length: 255 }).notNull(),
-  refresh_token: d.text(),
-  access_token: d.text(),
-  expires_at: d.integer(),
-  token_type: d.varchar({ length: 255 }),
-  scope: d.varchar({ length: 255 }),
-  id_token: d.text(),
-  session_state: d.varchar({ length: 255 }),
-}),
-(t) => [
-  primaryKey({ columns: [t.provider, t.providerAccountId] }),
-  index("account_user_id_idx").on(t.userId),
-]);
+export const accounts = pgTable(
+  "account",
+  (d) => ({
+    userId: d
+      .varchar({ length: 255 })
+      .notNull()
+      .references(() => users.id),
+    type: d.varchar({ length: 255 }).$type<AdapterAccount["type"]>().notNull(),
+    provider: d.varchar({ length: 255 }).notNull(),
+    providerAccountId: d.varchar({ length: 255 }).notNull(),
+    refresh_token: d.text(),
+    access_token: d.text(),
+    expires_at: d.integer(),
+    token_type: d.varchar({ length: 255 }),
+    scope: d.varchar({ length: 255 }),
+    id_token: d.text(),
+    session_state: d.varchar({ length: 255 }),
+  }),
+  (t) => [
+    primaryKey({ columns: [t.provider, t.providerAccountId] }),
+    index("account_user_id_idx").on(t.userId),
+  ],
+);
 
-export const sessions = pgTable("session", (d) => ({
-  sessionToken: d.varchar({ length: 255 }).notNull().primaryKey(),
-  userId: d.varchar({ length: 255 }).notNull().references(() => users.id),
-  expires: d.timestamp({ mode: "date", withTimezone: true }).notNull(),
-}),
-(t) => [index("t_user_id_idx").on(t.userId)]);
+export const sessions = pgTable(
+  "session",
+  (d) => ({
+    sessionToken: d.varchar({ length: 255 }).notNull().primaryKey(),
+    userId: d
+      .varchar({ length: 255 })
+      .notNull()
+      .references(() => users.id),
+    expires: d.timestamp({ mode: "date", withTimezone: true }).notNull(),
+  }),
+  (t) => [index("t_user_id_idx").on(t.userId)],
+);
 
-export const verificationTokens = pgTable("verification_token", (d) => ({
-  identifier: d.varchar({ length: 255 }).notNull(),
-  token: d.varchar({ length: 255 }).notNull(),
-  expires: d.timestamp({ mode: "date", withTimezone: true }).notNull(),
-}),
-(t) => [primaryKey({ columns: [t.identifier, t.token] })]);
+export const verificationTokens = pgTable(
+  "verification_token",
+  (d) => ({
+    identifier: d.varchar({ length: 255 }).notNull(),
+    token: d.varchar({ length: 255 }).notNull(),
+    expires: d.timestamp({ mode: "date", withTimezone: true }).notNull(),
+  }),
+  (t) => [primaryKey({ columns: [t.identifier, t.token] })],
+);
 
 // ------------------ AIRTABLE CLONE TABLES ------------------
 
 export const bases = pgTable("base", (d) => ({
   id: d.uuid().primaryKey().defaultRandom(),
   name: d.varchar({ length: 255 }).notNull(),
-  userId: d.varchar({ length: 255 }).notNull().references(() => users.id),
+  userId: d
+    .varchar({ length: 255 })
+    .notNull()
+    .references(() => users.id),
 }));
 
 export const tables = pgTable("table", (d) => ({
   id: d.uuid().primaryKey().defaultRandom(),
   name: d.varchar({ length: 255 }).notNull(),
-  baseId: d.uuid().notNull().references(() => bases.id),
+  baseId: d
+    .uuid()
+    .notNull()
+    .references(() => bases.id),
 }));
 
 export const views = pgTable("view", (d) => ({
   id: d.uuid().primaryKey().defaultRandom(),
   name: d.varchar({ length: 255 }).notNull(),
-  tableId: d.uuid().notNull().references(() => tables.id),
+  tableId: d
+    .uuid()
+    .notNull()
+    .references(() => tables.id),
 }));
 
 export const columns = pgTable("column", (d) => ({
   id: d.uuid().primaryKey().defaultRandom(),
   name: d.varchar({ length: 255 }).notNull(),
   type: d.varchar({ length: 20 }).notNull(), // "text" | "number"
-  tableId: d.uuid().notNull().references(() => tables.id),
+  tableId: d
+    .uuid()
+    .notNull()
+    .references(() => tables.id),
   order: d.integer().notNull().default(0),
 }));
 
 export const rows = pgTable("row", (d) => ({
   id: d.uuid().primaryKey().defaultRandom(),
-  tableId: d.uuid().notNull().references(() => tables.id),
+  tableId: d
+    .uuid()
+    .notNull()
+    .references(() => tables.id),
   order: d.integer().notNull().default(0),
 }));
 
-export const cells = pgTable("cell", (d) => {
-  return {
-    id: d.uuid("id").primaryKey().defaultRandom(),
-    value: d.text("value"),
-    rowId: d.uuid("rowId").notNull().references(() => rows.id),
-    columnId: d.uuid("columnId").notNull().references(() => columns.id),
-  };
-}, (t) => [
-  unique().on(t.rowId, t.columnId),
-]);
-
+export const cells = pgTable(
+  "cell",
+  (d) => {
+    return {
+      id: d.uuid("id").primaryKey().defaultRandom(),
+      value: d.text("value"),
+      rowId: d
+        .uuid("rowId")
+        .notNull()
+        .references(() => rows.id),
+      columnId: d
+        .uuid("columnId")
+        .notNull()
+        .references(() => columns.id),
+    };
+  },
+  (t) => [unique().on(t.rowId, t.columnId)],
+);
