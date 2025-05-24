@@ -33,6 +33,28 @@ export const baseRouter = createTRPCRouter({
       return newBase[0];
     }),
 
+  getBaseName: protectedProcedure
+    .input(
+      z.object({
+        baseId: z.string(),
+      }),
+    )
+    .query(async ({ input }) => {
+      const { baseId } = input;
+      // get the base name for the given baseId
+      const base = await db.query.bases.findFirst({
+        where: (bases, { eq }) => eq(bases.id, baseId),
+        // only return the id and name columns
+        columns: { id: true, name: true },
+      });
+      // if no base found, return null
+      if (!base) {
+        return null;
+      }
+      // return the base name
+      return base.name;
+    }),
+    
   // retrieve all bases for the user
   getAll: protectedProcedure.query(async ({ ctx }) => {
     // basically a select statement and find within the table where the user id is the same as the logged in user

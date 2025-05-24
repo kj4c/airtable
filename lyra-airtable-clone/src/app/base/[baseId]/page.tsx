@@ -6,12 +6,29 @@ import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import type { ColumnDef } from "@tanstack/react-table";
 import type { RowData } from "types";
+import BaseLayout from "~/components/ui/base-layout";
 
 export default function BaseDashboard() {
   const params = useParams<{ baseId: string }>();
   const { baseId } = params;
   const [baseName, setBaseName] = useState("");
   const [selectedTableId, setSelectedTableId] = useState<string | null>(null);
+
+  // get base name
+  const baseNamedata = api.base.getBaseName.useQuery(
+    {
+      baseId: baseId,
+    },
+    {
+      enabled: !!baseId,
+    },
+  );
+
+  useEffect(() => {
+    if (baseNamedata.data) {
+      setBaseName(baseNamedata.data);
+    }
+  }, [baseNamedata.data]);
 
   // 1. Fetch all tables for this base
   const {
@@ -26,6 +43,7 @@ export default function BaseDashboard() {
       enabled: !!baseId, // this makes it so that the table runs only if the baseId is not null
     },
   );
+
 
   useEffect(() => {
     const firstTable = baseData?.[0];
@@ -54,30 +72,32 @@ export default function BaseDashboard() {
   const data = tableData?.data ?? [];
 
   return (
-    <div className="p-6">
-      <h1 className="mb-4 text-2xl font-bold">
-        {baseData?.find((t) => t.id === selectedTableId)?.name ?? "Loading..."}
-      </h1>
+    <BaseLayout baseName={baseName}>
+      <div className="p-6">
+        <h1 className="mb-4 text-2xl font-bold">
+          {baseData?.find((t) => t.id === selectedTableId)?.name ?? "Loading..."}
+        </h1>
 
-      <div className="mb-4 flex gap-2">
-        {baseData?.map((t) => (
-          <button
-            key={t.id}
-            onClick={() => setSelectedTableId(t.id)}
-            className={`rounded px-4 py-2 ${
-              selectedTableId === t.id
-                ? "bg-blue-500 text-white"
-                : "bg-gray-200 hover:bg-gray-300"
-            }`}
-          >
-            {t.name}
-          </button>
-        ))}
+        <div className="mb-4 flex gap-2">
+          {baseData?.map((t) => (
+            <button
+              key={t.id}
+              onClick={() => setSelectedTableId(t.id)}
+              className={`rounded px-4 py-2 ${
+                selectedTableId === t.id
+                  ? "bg-blue-500 text-white"
+                  : "bg-gray-200 hover:bg-gray-300"
+              }`}
+            >
+              {t.name}
+            </button>
+          ))}
+        </div>
+
+        {selectedTableId && (
+          <DataTable columns={columns} data={data} tableId={selectedTableId} />
+        )}
       </div>
-
-      {selectedTableId && (
-        <DataTable columns={columns} data={data} tableId={selectedTableId} />
-      )}
-    </div>
+    </BaseLayout>
   );
 }
