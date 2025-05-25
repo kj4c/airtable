@@ -5,6 +5,13 @@ import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import { db } from "~/server/db";
 import { cells, columns, rows } from "~/server/db/schema";
 import { generateColumns, generateRows } from "./data";
+import { faker } from "@faker-js/faker";
+
+async function getColumnsForTable(tableId: string) {
+  return db.query.columns.findMany({
+    where: (columns, { eq }) => eq(columns.tableId, tableId),
+  });
+}
 
 export const tableRouter = createTRPCRouter({
   // mutation means to create data and not a query
@@ -111,10 +118,7 @@ export const tableRouter = createTRPCRouter({
     .query(async ({ input }) => {
       const { tableId } = input;
 
-      // convert to tanstack within here.
-      const columnsData = await db.query.columns.findMany({
-        where: (columns, { eq }) => eq(columns.tableId, tableId),
-      });
+      const columnsData = await getColumnsForTable(tableId);
       return columnsData;
     }),
 
@@ -178,4 +182,32 @@ export const tableRouter = createTRPCRouter({
 
       return cell;
     }),
+
+  insert100kRows: protectedProcedure
+    .input(
+      z.object({
+        tableId: z.string(),
+      }),
+    )
+    .mutation(async ({ input }) => {
+      const { tableId } = input;
+
+      const columnsForTable = await getColumnsForTable(tableId);
+      if (columnsForTable.length === 0) {
+        throw new Error("No columns found for the table");
+      }
+
+      // need to batch the rows to avoid hitting the max query size
+      const batchSize = 1000; 
+      const totalRows = 100000;
+
+      // for (let batchIndex; batchIndex < totalRows; batchIndex += batchSize) {
+
+      // }
+
+
+
+      // return insertedRows;
+    }
+  ),
 });

@@ -30,7 +30,7 @@ export function AuthButton() {
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger asChild>
+      <DropdownMenuTrigger asChild >
         <Avatar className="cursor-pointer">
           <AvatarImage src={session.user?.image ?? ""} />
           <AvatarFallback>{session.user?.name?.[0] ?? "?"}</AvatarFallback>
