@@ -100,7 +100,7 @@ export default function BasePage() {
 
       <div className="mt-4 flex flex-wrap gap-4">
         {userBases?.map((base) => (
-          <Link href={`/base/${base.id}`} key={base.id}>
+          <Link href={`/base/${base.id}?name=${encodeURIComponent(base.name)}`} key={base.id}>
             <BaseBox key={base.id} name={base.name} />
           </Link>
         ))}

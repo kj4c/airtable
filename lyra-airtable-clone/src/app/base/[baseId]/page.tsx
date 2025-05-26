@@ -2,7 +2,7 @@
 
 import { DataTable } from "~/app/_components/table";
 import { api } from "~/trpc/react";
-import { useParams } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import type { ColumnDef } from "@tanstack/react-table";
 import type { RowData } from "types";
@@ -11,26 +11,12 @@ import { Button } from "~/components/ui/button";
 
 export default function BaseDashboard() {
   const params = useParams<{ baseId: string }>();
+  const searchParams = useSearchParams();
   const { baseId } = params;
-  const [baseName, setBaseName] = useState("");
+  const baseName = searchParams.get('name');
   const [selectedTableId, setSelectedTableId] = useState<string | null>(null);
   const utils = api.useUtils();
 
-  // get base name
-  const baseNamedata = api.base.getBaseName.useQuery(
-    {
-      baseId: baseId,
-    },
-    {
-      enabled: !!baseId,
-    },
-  );
-
-  useEffect(() => {
-    if (baseNamedata.data) {
-      setBaseName(baseNamedata.data);
-    }
-  }, [baseNamedata.data]);
 
   // add new table
   const createTable = api.base.createTable.useMutation({
@@ -84,7 +70,7 @@ export default function BaseDashboard() {
   const data = tableData?.data ?? [];
 
   return (
-    <BaseLayout baseName={baseName}>
+    <BaseLayout baseName={baseName ?? 'No base name'}>
       <div className="">
         <div className="mb-4 flex bg-green-800 w-full">
           <div className="ml-2">
