@@ -6,6 +6,7 @@ import { db } from "~/server/db";
 import { cells, columns, rows } from "~/server/db/schema";
 import { generateColumns, generateRows } from "./data";
 import { faker } from "@faker-js/faker";
+import { or } from "drizzle-orm";
 
 async function getColumnsForTable(tableId: string) {
   return db.query.columns.findMany({
@@ -59,7 +60,7 @@ export const tableRouter = createTRPCRouter({
     .mutation(async ({ input }) => {
       const { tableId } = input;
       // values should match the schema of the table
-      // get the max order for the table
+      // get the max order for the table  
       const existing = await db.query.rows.findMany({
         where: (r, { eq }) => eq(r.tableId, input.tableId),
         columns: { order: true },
@@ -181,7 +182,8 @@ export const tableRouter = createTRPCRouter({
       });
 
       return cell;
-    }),
+    }
+  ),
 
   insert100kRows: protectedProcedure
     .input(
@@ -197,17 +199,62 @@ export const tableRouter = createTRPCRouter({
         throw new Error("No columns found for the table");
       }
 
+      // get the existing rows to find the order.
+      const existingRows = await db.query.rows.findMany({
+        where: (r, { eq }) => eq(r.tableId, tableId),
+        columns: { order: true },
+      });
+
+      let currentOrder =
+      existingRows.length === 0
+        ? 0
+        : Math.max(...existingRows.map((r) => r.order ?? 0)) + 1;
+
       // need to batch the rows to avoid hitting the max query size
-      const batchSize = 1000; 
       const totalRows = 100000;
+      const batchSize = 500;
 
-      // for (let batchIndex; batchIndex < totalRows; batchIndex += batchSize) {
+      for (let batchStart = 0; batchStart < totalRows; batchStart += batchSize) {
+        // generate new rows
+        const rowsToInsert = Array.from({ length: batchSize }, (_, i) => ({
+          tableId,
+          order: currentOrder + i,
+        }));
 
-      // }
+        // insert the rows to get ids
+        const insertedRows = await db
+          .insert(rows)
+          .values(rowsToInsert)
+          .returning({ id: rows.id, order: rows.order });
 
+        const cellsToInsert = [];
 
+        for (const row of insertedRows) {
+          for (const column of columnsForTable) {
+            let value = "";
 
-      // return insertedRows;
+            if (column.type === "text") {
+              value = faker.lorem.words(2);
+            } else if (column.type === "number") {
+              value = faker.number.int({ min: 0, max: 1000 }).toString();
+            }
+
+            cellsToInsert.push({
+              rowId: row.id,
+              columnId: column.id,
+              value,
+            });
+          }
+        }
+        if (cellsToInsert.length > 0) {
+          await db.insert(cells).values(cellsToInsert);
+        }
+
+        currentOrder += batchSize;
+      }
+
+      return { success: true, message: "Inserted 100k rows" };
     }
   ),
+
 });

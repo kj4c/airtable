@@ -4,8 +4,6 @@ import { DataTable } from "~/app/_components/table";
 import { api } from "~/trpc/react";
 import { useParams, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
-import type { ColumnDef } from "@tanstack/react-table";
-import type { RowData } from "types";
 import BaseLayout from "~/components/ui/base-layout";
 import { Button } from "~/components/ui/button";
 
@@ -16,7 +14,6 @@ export default function BaseDashboard() {
   const baseName = searchParams.get('name');
   const [selectedTableId, setSelectedTableId] = useState<string | null>(null);
   const utils = api.useUtils();
-
 
   // add new table
   const createTable = api.base.createTable.useMutation({
@@ -42,7 +39,6 @@ export default function BaseDashboard() {
     },
   );
 
-
   useEffect(() => {
     const firstTable = baseData?.[0];
     if (firstTable && !selectedTableId) {
@@ -59,7 +55,7 @@ export default function BaseDashboard() {
     {
       tableId: selectedTableId ?? "",
       offset: 0,
-      limit: 100,
+      limit: 200,
     },
     {
       enabled: !!selectedTableId, // this makes it so that the table runs only if the selectedTableId is not null
@@ -81,20 +77,20 @@ export default function BaseDashboard() {
                 className={`rounded-t-xs px-4 py-1 text-sm cursor-pointer bg-green-800 ${
                   selectedTableId === t.id
                     ? "bg-white text-black"
-                    : "bg-gray-200 hover:bg-green-900"
+                    : "bg-gray-200 hover:bg-green-900 text-white"
                 }`}
               >
                 {t.name}
               </button>
             ))}
-            <button className="bg-transparent cursor-pointer text-sm ml-2"
+            <Button className="bg-transparent cursor-pointer text-sm ml-2"
               onClick={() => createTable.mutate({ 
                 name: `Table ${(baseData?.length ?? 0) + 1}`,
                 baseId: baseId 
               })}
             >
               + Add or import
-            </button>
+            </Button>
           </div>
         </div>
 

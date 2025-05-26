@@ -77,6 +77,13 @@ export function DataTable({
     },
   });
 
+  // fetch 100k rows
+  const insert100kRows = api.table.insert100kRows.useMutation({
+    onSuccess: async () => {
+      await utils.table.getTableData.invalidate();
+    },
+  });
+
   return (
     <div className="box-border overflow-x-auto border">
       <table className="box-border min-w-max table-fixed border-separate border-spacing-0 divide-y divide-gray-200">
@@ -186,7 +193,13 @@ export function DataTable({
                 >
                   <Plus className="text-gray-500 transition-colors" />
                 </Button>
-                <Button className="ml-2 h-2 bg-white text-black hover:bg-gray-50 cursor-pointer">
+                <Button className="ml-2 h-2 bg-white text-black hover:bg-gray-50 cursor-pointer"
+                  onClick={() => {
+                    insert100kRows.mutate({
+                      tableId: tableId,
+                    });
+                  }}
+                >
                   Add 100k rows
                 </Button>
               </div>
