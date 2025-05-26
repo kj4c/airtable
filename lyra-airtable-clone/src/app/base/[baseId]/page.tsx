@@ -6,12 +6,13 @@ import { useParams, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import BaseLayout from "~/components/ui/base-layout";
 import { Button } from "~/components/ui/button";
+import React from "react";
 
 export default function BaseDashboard() {
   const params = useParams<{ baseId: string }>();
   const searchParams = useSearchParams();
   const { baseId } = params;
-  const baseName = searchParams.get('name');
+  const baseName = searchParams.get("name");
   const [selectedTableId, setSelectedTableId] = useState<string | null>(null);
   const utils = api.useUtils();
 
@@ -46,48 +47,32 @@ export default function BaseDashboard() {
     }
   }, [baseData, selectedTableId]);
 
-  // 2. Fetch columns and rows for the selected table
-  const {
-    data: tableData,
-    error: tableError,
-    isLoading: tableLoading,
-  } = api.table.getTableData.useQuery(
-    {
-      tableId: selectedTableId ?? "",
-      offset: 0,
-      limit: 200,
-    },
-    {
-      enabled: !!selectedTableId, // this makes it so that the table runs only if the selectedTableId is not null
-    },
-  );
-
-  const columns = tableData?.columns ?? [];
-  const data = tableData?.data ?? [];
-
   return (
-    <BaseLayout baseName={baseName ?? 'No base name'}>
+    <BaseLayout baseName={baseName ?? "No base name"}>
       <div className="">
-        <div className="mb-4 flex bg-green-800 w-full">
+        <div className="mb-4 flex w-full bg-green-800">
           <div className="ml-2">
             {baseData?.map((t) => (
               <button
                 key={t.id}
                 onClick={() => setSelectedTableId(t.id)}
-                className={`rounded-t-xs px-4 py-1 text-sm cursor-pointer bg-green-800 ${
+                className={`cursor-pointer rounded-t-xs bg-green-800 px-4 py-1 text-sm ${
                   selectedTableId === t.id
                     ? "bg-white text-black"
-                    : "bg-gray-200 hover:bg-green-900 text-white"
+                    : "bg-gray-200 text-white hover:bg-green-900"
                 }`}
               >
                 {t.name}
               </button>
             ))}
-            <Button className="bg-transparent cursor-pointer text-sm ml-2"
-              onClick={() => createTable.mutate({ 
-                name: `Table ${(baseData?.length ?? 0) + 1}`,
-                baseId: baseId 
-              })}
+            <Button
+              className="ml-2 cursor-pointer bg-transparent text-sm"
+              onClick={() =>
+                createTable.mutate({
+                  name: `Table ${(baseData?.length ?? 0) + 1}`,
+                  baseId: baseId,
+                })
+              }
             >
               + Add or import
             </Button>
@@ -95,7 +80,9 @@ export default function BaseDashboard() {
         </div>
 
         {selectedTableId && (
-          <DataTable columns={columns} data={data} tableId={selectedTableId} />
+          <DataTable
+            tableId={selectedTableId}
+          />
         )}
       </div>
     </BaseLayout>

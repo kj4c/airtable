@@ -54,7 +54,7 @@ export const baseRouter = createTRPCRouter({
       // return the base name
       return base.name;
     }),
-    
+
   // retrieve all bases for the user
   getAll: protectedProcedure.query(async ({ ctx }) => {
     // basically a select statement and find within the table where the user id is the same as the logged in user

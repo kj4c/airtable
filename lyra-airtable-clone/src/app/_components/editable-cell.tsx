@@ -14,14 +14,13 @@ type EditableCellProps<TData> = {
   tableId: string;
 };
 
-export function EditableCell({
-  cell,
-  tableId,
-}: EditableCellProps<RowData>) {
+export function EditableCell({ cell, tableId }: EditableCellProps<RowData>) {
   const [isEditing, setIsEditing] = useState(false);
   const initialValue = cell.getValue();
   const [value, setValue] = useState<string>(
-    typeof initialValue === "string" ? initialValue : initialValue?.toString() ?? ""
+    typeof initialValue === "string"
+      ? initialValue
+      : (initialValue?.toString() ?? ""),
   );
   const utils = api.useUtils();
   const insertCell = api.table.insertCell.useMutation({
@@ -35,7 +34,6 @@ export function EditableCell({
       // Snapshot previous data
       const previous = utils.table.getTableData.getData({
         tableId,
-        offset: 0,
         limit: 100,
       });
 
@@ -44,22 +42,29 @@ export function EditableCell({
       // Optimistically update cache
       // setData updates cache
       // and the returned data immedidately will update since cache is updated
-      utils.table.getTableData.setData(
-        { tableId, offset: 0, limit: 100 },
+      utils.table.getTableData.setInfiniteData(
+        { tableId, limit: 100 },
         (oldData) => {
           if (!oldData) return oldData;
 
-          const newData = oldData.data.map((row) => {
-            if (row.id !== newCell.rowId) return row;
-            return {
-              ...row,
-              [newCell.columnId]: newCell.value,
-            };
-          });
-
-          return { ...oldData, data: newData };
-        },
+          return {
+            ...oldData,
+            pages: oldData.pages.map((page) => {
+              return {
+                ...page,
+                data: page.data.map((row) => {
+                  if (row.id !== newCell.rowId) return row;
+                  return {
+                    ...row,
+                    [newCell.columnId]: newCell.value,
+                  };
+                }),
+              };
+            }),
+          };
+        }
       );
+
 
       return { previous };
     },
@@ -68,7 +73,7 @@ export function EditableCell({
     onError: (_err, _newCell, context) => {
       if (context?.previous) {
         utils.table.getTableData.setData(
-          { tableId, offset: 0, limit: 100 },
+          { tableId, limit: 100 },
           context.previous,
         );
       }
@@ -78,9 +83,9 @@ export function EditableCell({
     onSettled: async () => {
       await utils.table.getTableData.invalidate({
         tableId,
-        offset: 0,
         limit: 100,
       });
+      await utils.table.getTableData.refetch({ tableId, limit: 100 });
     },
   });
 
@@ -95,9 +100,10 @@ export function EditableCell({
 
   return (
     <td
-      className={`border-box h-10 w-[150px] cursor-pointer truncate overflow-x-hidden border-1 px-1 py-2 text-sm text-gray-900 ${
+      className={`border-box h-10 w-[150px] overflow-hidden cursor-pointer border-1 px-1 py-2 text-sm text-gray-900 ${
         isEditing ? "rounded-[6px] border-3 border-blue-500 text-blue-500" : ""
       }`}
+      style={{ minWidth: "150px", maxWidth: "150px" }}
       onClick={() => setIsEditing(true)}
     >
       {isEditing ? (
@@ -109,14 +115,18 @@ export function EditableCell({
           onBlur={handleSave}
           onKeyDown={(e) => {
             if (e.key === "Enter") handleSave();
+            if (e.key === "Escape") {
+              setIsEditing(false);
+              setValue(initialValue?.toString() ?? "");
+            }
           }}
         />
       ) : (
-        <div className="w-[150px] max-w-full">
+        <div className="w-full truncate whitespace-nowrap overflow-hidden text-ellipsis">
           {/* {value} */}
           {flexRender(cell.column.columnDef.cell, cell.getContext())}
         </div>
       )}
     </td>
   );
-};
+}

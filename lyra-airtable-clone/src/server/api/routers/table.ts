@@ -6,7 +6,8 @@ import { db } from "~/server/db";
 import { cells, columns, rows } from "~/server/db/schema";
 import { generateColumns, generateRows } from "./data";
 import { faker } from "@faker-js/faker";
-import { or } from "drizzle-orm";
+import { eq, or } from "drizzle-orm";
+import { sql } from "drizzle-orm";
 
 async function getColumnsForTable(tableId: string) {
   return db.query.columns.findMany({
@@ -60,7 +61,7 @@ export const tableRouter = createTRPCRouter({
     .mutation(async ({ input }) => {
       const { tableId } = input;
       // values should match the schema of the table
-      // get the max order for the table  
+      // get the max order for the table
       const existing = await db.query.rows.findMany({
         where: (r, { eq }) => eq(r.tableId, input.tableId),
         columns: { order: true },
@@ -127,25 +128,28 @@ export const tableRouter = createTRPCRouter({
     .input(
       z.object({
         tableId: z.string(),
-        offset: z.number(),
         limit: z.number(),
+        cursor: z.number().optional(),
       }),
     )
-    .query(async ({ input, ctx }) => {
-      const { tableId, offset, limit } = input;
+    .query(async ({ input }) => {
+      const { tableId, limit, cursor } = input;
 
       const rowsForTable = await db.query.rows.findMany({
-        where: (rows, { eq }) => eq(rows.tableId, tableId),
+        where: (rows, { eq, gt }) =>
+          cursor
+            ? eq(rows.tableId, tableId) && gt(rows.order, cursor)
+            : eq(rows.tableId, tableId),
         orderBy: (rows, { asc }) => asc(rows.order),
-        limit: limit,
-        offset: offset,
+        limit,
       });
+
+      const rowIds = rowsForTable.map((r) => r.id);
 
       const columnsForTable = await db.query.columns.findMany({
         where: (c, { eq }) => eq(c.tableId, tableId),
       });
 
-      const rowIds = rowsForTable.map((r) => r.id);
       const cellsForTable = rowIds.length
         ? await db.query.cells.findMany({
             // rowsId is a table of row ids find any cell within this row
@@ -160,9 +164,24 @@ export const tableRouter = createTRPCRouter({
         cellsForTable,
       );
 
+      const lastRow = rowsForTable[rowsForTable.length - 1];
+
+      const result = await db
+        .select({
+          count: sql<number>`count(*)`,
+        })
+        .from(rows)
+        .where(eq(rows.tableId, tableId));
+
+      const totalRowCount = result[0]?.count ?? 0;
+
       return {
-        columns: columnDefs,
         data: rowData,
+        columns: columnDefs,
+        nextCursor: lastRow?.order ?? null,
+        meta: {
+          totalRowCount,
+        }
       };
     }),
 
@@ -182,8 +201,7 @@ export const tableRouter = createTRPCRouter({
       });
 
       return cell;
-    }
-  ),
+    }),
 
   insert100kRows: protectedProcedure
     .input(
@@ -206,15 +224,19 @@ export const tableRouter = createTRPCRouter({
       });
 
       let currentOrder =
-      existingRows.length === 0
-        ? 0
-        : Math.max(...existingRows.map((r) => r.order ?? 0)) + 1;
+        existingRows.length === 0
+          ? 0
+          : Math.max(...existingRows.map((r) => r.order ?? 0)) + 1;
 
       // need to batch the rows to avoid hitting the max query size
-      const totalRows = 100000;
+      const totalRows = 1000;
       const batchSize = 500;
 
-      for (let batchStart = 0; batchStart < totalRows; batchStart += batchSize) {
+      for (
+        let batchStart = 0;
+        batchStart < totalRows;
+        batchStart += batchSize
+      ) {
         // generate new rows
         const rowsToInsert = Array.from({ length: batchSize }, (_, i) => ({
           tableId,
@@ -254,7 +276,5 @@ export const tableRouter = createTRPCRouter({
       }
 
       return { success: true, message: "Inserted 100k rows" };
-    }
-  ),
-
+    }),
 });

@@ -23,7 +23,6 @@ type DBCell = {
   columnId: string;
 };
 
-
 export function generateColumns(columns: DBColumn[]): ColumnDef<RowData>[] {
   return columns
     .filter((col) => col.name !== "order") // filter out the order column

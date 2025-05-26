@@ -6,7 +6,7 @@ import {
   getCoreRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import React from "react";
+import React, { useMemo } from "react";
 import { Button } from "../../components/ui/button";
 import { api } from "~/trpc/react";
 import {
@@ -21,49 +21,105 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "~/components/ui/dropdown-menu";
 import { Input } from "../../components/ui/input";
 import { Plus } from "lucide-react";
 import { EditableCell } from "./editable-cell";
 import type { RowData } from "types.tsx";
+import { useVirtualizer } from '@tanstack/react-virtual'
 
 // define the type of the data, TData is a generic type
 type DataTableProps = {
-  columns: ColumnDef<RowData, string | number>[];
-  data: RowData[];
   tableId: string;
 };
 
 function capitalizeFirstLetter(str: string) {
   return str.charAt(0).toUpperCase() + str.slice(1);
-}
+} 
 
-export function DataTable({
-  columns,
-  data,
-  tableId,
-}: DataTableProps) {
-  const [open, setOpen] = React.useState(false);
+
+
+export function DataTable({ tableId }: DataTableProps) {
+  const [open, setOpen] = React.useState(false); 
   const [columnName, setColumnName] = React.useState("");
   const [type, setType] = React.useState<"text" | "number">("text");
   const utils = api.useUtils();
+  const tableContainerRef = React.useRef<HTMLDivElement>(null)
+
+  const {
+    data,
+    fetchNextPage,
+    hasNextPage,
+    isFetching,
+  } = api.table.getTableData.useInfiniteQuery(
+    {
+      tableId,
+      limit: 100,
+    },
+    {
+      getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
+    }
+  );
+
+  const columns = data?.pages?.[0]?.columns ?? [];
+  const flatData = useMemo(
+    () => data?.pages?.flatMap(page => page.data) ?? [],
+    [data]
+  );
+
+  const totalDBRowCount = data?.pages?.[0]?.meta?.totalRowCount ?? 0;
+  const totalFetched = flatData.length;
+
+
+  const rowVirtualizer = useVirtualizer({
+    count: flatData.length,
+    getScrollElement: () => tableContainerRef.current,
+    estimateSize: () => 40, // row height estimate
+    measureElement:
+      typeof window !== 'undefined' &&
+      navigator.userAgent.indexOf('Firefox') === -1
+        ? element => element?.getBoundingClientRect().height
+        : undefined,
+    overscan: 10,
+  });
+
+    // Fetch more rows on scroll bottom
+  const fetchMoreOnBottomReached = React.useCallback(
+    (containerRefElement?: HTMLDivElement | null) => {
+      if (containerRefElement) {
+        const { scrollHeight, scrollTop, clientHeight } = containerRefElement;
+        if (
+          scrollHeight - scrollTop - clientHeight < 500 &&
+          !isFetching &&
+          totalFetched < totalDBRowCount
+        ) {
+          fetchNextPage();
+        }
+      }
+    },
+    [fetchNextPage, isFetching, totalFetched, totalDBRowCount]
+  );
+
+  React.useEffect(() => {
+    fetchMoreOnBottomReached(tableContainerRef.current);
+  }, [fetchMoreOnBottomReached]);
 
   const table = useReactTable({
-    data,
+    data: flatData,
     columns,
     getCoreRowModel: getCoreRowModel(),
+    manualSorting: true,
   });
+  console.log(flatData.map(r => r.order)); 
 
   const createColumn = api.table.createColumn.useMutation({
     onSuccess: async () => {
       await utils.table.getTableData.invalidate({
         tableId: tableId,
-        offset: 0,
         limit: 100,
       });
+      await utils.table.getTableData.refetch({ tableId, limit: 100 });
     },
   });
 
@@ -71,23 +127,29 @@ export function DataTable({
     onSuccess: async () => {
       await utils.table.getTableData.invalidate({
         tableId: tableId,
-        offset: 0,
         limit: 100,
       });
+      await utils.table.getTableData.refetch({ tableId, limit: 100 });
     },
   });
 
   // fetch 100k rows
   const insert100kRows = api.table.insert100kRows.useMutation({
     onSuccess: async () => {
-      await utils.table.getTableData.invalidate();
+      await utils.table.getTableData.invalidate({ tableId, limit: 100});
+      await utils.table.getTableData.refetch({ tableId, limit: 100 });
     },
   });
 
   return (
-    <div className="box-border overflow-x-auto border">
-      <table className="box-border min-w-max table-fixed border-separate border-spacing-0 divide-y divide-gray-200">
-        <thead className="bg-gray-50">
+    <div 
+      ref={tableContainerRef}
+      className="overflow-auto border relative"
+      style={{ height: "600px" }}
+      onScroll={e => fetchMoreOnBottomReached(e.currentTarget)}
+    >
+      <table className="box-border min-w-fit w-max table-fixed border-separate border-spacing-0 divide-y divide-gray-200">
+        <thead className="bg-gray-50 sticky top-0 z-10">
           {table.getHeaderGroups().map((headerGroup) => (
             // get the columns
             <tr key={headerGroup.id}>
@@ -95,7 +157,7 @@ export function DataTable({
               {headerGroup.headers.map((header) => (
                 <th
                   key={header.id}
-                  className="w-[150px] truncate border-1 px-4 py-2 text-left text-sm font-semibold text-black"
+                  className="w-[150px] border-1 px-4 py-2 text-left text-sm font-semibold text-black"
                 >
                   {flexRender(
                     header.column.columnDef.header,
@@ -166,21 +228,40 @@ export function DataTable({
             </tr>
           ))}
         </thead>
-        <tbody className="divide-y divide-gray-100 bg-white">
-          {table.getRowModel().rows.map((row) => (
+        <tbody 
+          className="relative block divide-y divide-gray-100 bg-white"
+          style={{ height: `${rowVirtualizer.getTotalSize() + 40}px` }}
+        >
+          {rowVirtualizer.getVirtualItems().map((virtualRow) => {
             // display the rows
             // put number
-            <tr key={row.id}>
-              <td className="border-box flex h-10 w-10 items-center justify-center border-1 text-sm text-gray-900">
-                {row.index + 1}
-              </td>
-              {row.getVisibleCells().map((cell) => (
-                <EditableCell key={cell.id} cell={cell} tableId={tableId} />
-              ))}
-            </tr>
-          ))}
-          <tr>
-            <td colSpan={columns.length + 1} className="w-[200px]">
+            const row = table.getRowModel().rows[virtualRow.index];
+            if (!row) return null; // handle case where row is not found
+            
+            return (
+              <tr 
+                data-index={virtualRow.index}
+                key={row.id}
+                ref={node => rowVirtualizer.measureElement(node)}
+                className="absolute flex w-full border-b border-gray-200"
+                style={{ transform: `translateY(${virtualRow.start}px)` }} 
+              >
+                <td className="border-box flex h-10 max-w-[30px] min-w-[30px] items-center justify-center border-1 text-sm text-gray-900">
+                  {row.index + 1}
+                </td>
+                {row.getVisibleCells().map((cell) => (
+                  <EditableCell key={cell.id} cell={cell} tableId={tableId} />
+                ))}
+              </tr>
+            );
+          })}
+          <tr
+            className="absolute flex w-full border-b border-gray-200"
+            style={{ transform: `translateY(${rowVirtualizer.getTotalSize()}px)` }}
+          >
+            <td className="flex h-10 w-10 shrink-0 items-center justify-center border text-sm text-gray-900">
+            </td>
+            <td className="flex w-full items-center justify-start px-4 py-2" colSpan={columns.length}>
               <div className="flex items-center space-x-2">
                 <Button
                   onClick={() => {
@@ -189,11 +270,12 @@ export function DataTable({
                     });
                   }}
                   size="icon"
-                  className="w-10 cursor-pointer items-center justify-center rounded-none bg-white text-black hover:bg-gray-50 shadow-none"
+                  className="w-10 cursor-pointer items-center justify-center rounded-none bg-white text-black shadow-none hover:bg-gray-50"
                 >
                   <Plus className="text-gray-500 transition-colors" />
                 </Button>
-                <Button className="ml-2 h-2 bg-white text-black hover:bg-gray-50 cursor-pointer"
+                <Button
+                  className="ml-2 h-2 cursor-pointer bg-white text-black hover:bg-gray-50"
                   onClick={() => {
                     insert100kRows.mutate({
                       tableId: tableId,
