@@ -106,7 +106,7 @@ export function DataTable({ tableId }: DataTableProps) {
       await fetchMoreOnBottomReached(tableContainerRef.current);
     };
     
-    fetchData();
+    void fetchData();
   }, [fetchMoreOnBottomReached]);
 
   const table = useReactTable({
