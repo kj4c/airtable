@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { AuthButton } from "~/components/ui/auth-button";
+import ViewSidebar from "~/app/_components/table-sidebar";
 
 export default function BaseLayout({
   children,
@@ -15,7 +16,7 @@ export default function BaseLayout({
 
   return (
     <div className="flex min-h-screen flex-col">
-      <header className="sticky top-0 z-50 flex h-14 items-center justify-between bg-green-700 px-1">
+      <header className="sticky top-0 flex h-14 items-center justify-between bg-green-700 px-1">
         <div className="flex min-w-[60px] items-center">
           <Link href="/home">
             <img
@@ -30,7 +31,9 @@ export default function BaseLayout({
 
       <div className="flex flex-1">
         {/* Main content */}
-        <main className="flex-1 overflow-auto bg-white">{children}</main>
+        <main className="flex-1 overflow-hidden bg-white">
+          {children}
+        </main>
       </div>
     </div>
   );

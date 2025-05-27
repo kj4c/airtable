@@ -7,6 +7,9 @@ import { useEffect, useState } from "react";
 import BaseLayout from "~/components/ui/base-layout";
 import { Button } from "~/components/ui/button";
 import React from "react";
+import { ChevronDown } from "lucide-react";
+import TableToolbar from "~/app/_components/table-toolbar";
+import ViewSidebar from "~/app/_components/table-sidebar";
 
 export default function BaseDashboard() {
   const params = useParams<{ baseId: string }>();
@@ -19,18 +22,31 @@ export default function BaseDashboard() {
   // add new table
   const createTable = api.base.createTable.useMutation({
     onSuccess: async (newTable) => {
-      if (newTable) {
-        setSelectedTableId(newTable.id);
-      }
       await utils.base.getTables.invalidate();
     },
   });
 
-  const handleCreate =() => {
-    createTable.mutate({
-    name: `Table ${(baseData?.length ?? 0) + 1}`,
-    baseId: baseId,
+  const insertColumn = api.table.createColumn.useMutation({
+    onSuccess: async () => {
+      await utils.table.getColumns.invalidate();
+    },
+  });
+
+  const handleCreate = async () => {
+    const newTable = await createTable.mutateAsync({
+      name: `Table ${(baseData?.length ?? 0) + 1}`,
+      baseId: baseId,
     })
+
+    if (newTable?.id) {
+      setSelectedTableId(newTable.id);
+
+      await insertColumn.mutateAsync({
+        name: `Name`,
+        type: "text",
+        tableId: newTable.id
+      })
+    }
   }
 
   // 1. Fetch all tables for this base
@@ -56,24 +72,27 @@ export default function BaseDashboard() {
 
   return (
     <BaseLayout baseName={baseName ?? "No base name"}>
-      <div className="">
-        <div className="mb-4 flex w-full bg-green-800">
-          <div className="ml-2">
+      <div className="flex flex-col w-full flex-1">
+        <div className="flex flex-col w-full items-stretch bg-green-800">
+          <div className="ml-2 flex items-end h-8 bg-green-800 px-2">
             {baseData?.map((t) => (
               <button
                 key={t.id}
                 onClick={() => setSelectedTableId(t.id)}
-                className={`cursor-pointer rounded-t-xs bg-green-800 px-4 py-1 text-sm ${
+                className={`h-8 cursor-pointer rounded-t-xs bg-green-800 px-4 py-1 text-xs ${
                   selectedTableId === t.id
-                    ? "bg-white text-black"
+                    ? "bg-white text-black rounded-b-none border-b-0"
                     : "bg-gray-200 text-white hover:bg-green-900"
                 }`}
               >
                 {t.name}
+                {selectedTableId === t.id &&
+                  <ChevronDown className="inline ml-1 h-3 w-3" />
+                }
               </button>
             ))}
             <Button
-              className="ml-2 cursor-pointer bg-transparent text-sm"
+              className="ml-2 cursor-pointer bg-transparent text-sm hover:bg-transparent hover:text-white text-gray-200"
               onClick={() =>
                 handleCreate()
               }
@@ -81,13 +100,21 @@ export default function BaseDashboard() {
               + Add or import
             </Button>
           </div>
+          <div className="border-t-0">
+            <TableToolbar />
+          </div>
         </div>
-
-        {selectedTableId && (
-          <DataTable
-            tableId={selectedTableId}
-          />
-        )}
+        
+        <div className="flex flex-1 overflow-hidden">
+          <ViewSidebar />
+          <div className="flex-1 overflow-hidden">
+            {selectedTableId && (
+              <div className="h-[calc(100vh-130px)] w-full overflow-auto">
+                <DataTable tableId={selectedTableId} />
+              </div>
+            )}
+          </div>
+        </div>
       </div>
     </BaseLayout>
   );

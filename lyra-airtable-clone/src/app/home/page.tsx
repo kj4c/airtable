@@ -21,6 +21,7 @@ export default function BasePage() {
   const [open, setOpen] = useState(false);
   const [baseName, setBaseName] = useState("");
   const [error, setError] = useState("");
+  const utils = api.useUtils();
 
   const { data: userBases, refetch } = api.base.getAll.useQuery();
 
@@ -35,6 +36,12 @@ export default function BasePage() {
   });
 
   const createTableMutation = api.base.createTable.useMutation();
+  const createColumn = api.table.createColumn.useMutation();
+  const createRow = api.table.createRow.useMutation({
+    onSuccess: async () => {
+      await utils.table.getTableData.invalidate();
+    },
+  });
 
   const { data: session, status } = useSession();
   if (status === "loading") {
@@ -52,10 +59,25 @@ export default function BasePage() {
     const base = await createBase.mutateAsync({ name: baseName });
 
     if (base?.id) {
-      await createTableMutation.mutateAsync({
+      const table = await createTableMutation.mutateAsync({
         baseId: base.id,
         name: "Table 1",
       });
+
+      // default column for the table
+      if (table?.id) {
+        await createColumn.mutateAsync({
+          tableId: table.id,
+          name: "Name",
+          type: "text",
+        });
+
+        for (let i = 0; i < 3; i++) {
+          await createRow.mutateAsync({
+            tableId: table.id
+          });
+        }
+      }
     }
     setOpen(false);
   }

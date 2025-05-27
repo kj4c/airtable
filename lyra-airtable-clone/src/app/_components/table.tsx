@@ -133,8 +133,8 @@ export function DataTable({ tableId }: DataTableProps) {
     },
   });
 
-  // fetch 100k rows
-  const insert100kRows = api.table.insert100kRows.useMutation({
+  // fetch 1k rows
+  const insert100kRows = api.table.insert1kRows.useMutation({
     onSuccess: async () => {
       await utils.table.getTableData.invalidate({ tableId, limit: 100});
       await utils.table.getTableData.refetch({ tableId, limit: 100 });
@@ -144,20 +144,20 @@ export function DataTable({ tableId }: DataTableProps) {
   return (
     <div 
       ref={tableContainerRef}
-      className="overflow-auto border relative"
-      style={{ height: "1000px" }}
-      onScroll={e => fetchMoreOnBottomReached(e.currentTarget)}
+      className="relative h-full overflow-auto border"
+      onScroll={(e) => fetchMoreOnBottomReached(e.currentTarget)}
     >
       <table className="box-border min-w-fit w-max table-fixed border-separate border-spacing-0 divide-y divide-gray-200">
         <thead className="bg-gray-50 sticky top-0 z-10">
           {table.getHeaderGroups().map((headerGroup) => (
             // get the columns
             <tr key={headerGroup.id}>
-              <th></th>
+              <th className="w-10 bg-gray-100 border-b-1">
+              </th>
               {headerGroup.headers.map((header) => (
                 <th
                   key={header.id}
-                  className="w-[150px] border-1 px-4 py-2 text-left text-sm font-semibold text-black"
+                  className="w-[150px] border-l-0 border-r-1 border-b-1 bg-gray-100 px-4 py-2 text-left text-sm font-light text-black"
                 >
                   {flexRender(
                     header.column.columnDef.header,
@@ -166,7 +166,7 @@ export function DataTable({ tableId }: DataTableProps) {
                 </th>
               ))}
               {/* Add column for the plus button */}
-              <th className="flex w-[60px] items-center justify-center border-1 text-left text-sm font-semibold text-black">
+              <th className="flex w-[60px] items-center border-b-1 border-r-1 bg-gray-100 justify-center text-left text-sm font-semibold text-black">
                 <Dialog open={open} onOpenChange={setOpen}>
                   <DialogTrigger asChild>
                     <Button
@@ -243,10 +243,10 @@ export function DataTable({ tableId }: DataTableProps) {
                 data-index={virtualRow.index}
                 key={row.id}
                 ref={node => rowVirtualizer.measureElement(node)}
-                className="absolute flex w-full border-b border-gray-200"
+                className="absolute flex w-full border-b"
                 style={{ transform: `translateY(${virtualRow.start}px)` }} 
               >
-                <td className="border-box flex h-10 max-w-[30px] min-w-[30px] items-center justify-center border-1 text-sm text-gray-900">
+                <td className="flex h-10 max-w-[40px] min-w-[40px] border-b-1 items-center justify-center text-sm text-gray-900">
                   {row.index + 1}
                 </td>
                 {row.getVisibleCells().map((cell) => (
@@ -256,12 +256,10 @@ export function DataTable({ tableId }: DataTableProps) {
             );
           })}
           <tr
-            className="absolute flex w-full border-b border-gray-200"
+            className="absolute flex w-[190px] border-b border-r"
             style={{ transform: `translateY(${rowVirtualizer.getTotalSize()}px)` }}
           >
-            <td className="flex h-10 w-10 shrink-0 items-center justify-center border text-sm text-gray-900">
-            </td>
-            <td className="flex w-full items-center justify-start px-4 py-2" colSpan={columns.length}>
+            <td className="flex w-full items-center justify-start" colSpan={columns.length}>
               <div className="flex items-center space-x-2">
                 <Button
                   onClick={() => {
@@ -275,14 +273,14 @@ export function DataTable({ tableId }: DataTableProps) {
                   <Plus className="text-gray-500 transition-colors" />
                 </Button>
                 <Button
-                  className="ml-2 h-2 cursor-pointer bg-white text-black hover:bg-gray-50"
+                  className=" border-1 h-2 cursor-pointer bg-white text-black hover:bg-gray-50"
                   onClick={() => {
                     insert100kRows.mutate({
                       tableId: tableId,
                     });
                   }}
                 >
-                  Add 100k rows
+                  Add 1k rows
                 </Button>
               </div>
             </td>

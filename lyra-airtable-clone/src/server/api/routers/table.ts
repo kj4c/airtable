@@ -203,7 +203,7 @@ export const tableRouter = createTRPCRouter({
       return cell;
     }),
 
-  insert100kRows: protectedProcedure
+  insert1kRows: protectedProcedure
     .input(
       z.object({
         tableId: z.string(),
@@ -229,7 +229,7 @@ export const tableRouter = createTRPCRouter({
           : Math.max(...existingRows.map((r) => r.order ?? 0)) + 1;
 
       // need to batch the rows to avoid hitting the max query size
-      const totalRows = 100000;
+      const totalRows = 1000;
       const batchSize = 500;
 
       for (
@@ -275,6 +275,6 @@ export const tableRouter = createTRPCRouter({
         currentOrder += batchSize;
       }
 
-      return { success: true, message: "Inserted 100k rows" };
+      return { success: true, message: "Inserted 1k rows" };
     }),
 });

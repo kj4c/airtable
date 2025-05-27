@@ -100,7 +100,7 @@ export function EditableCell({ cell, tableId }: EditableCellProps<RowData>) {
 
   return (
     <td
-      className={`border-box h-10 w-[150px] overflow-hidden cursor-pointer border-1 px-1 py-2 text-sm text-gray-900 ${
+      className={`border-box h-10 w-[150px] overflow-hidden cursor-pointer border-r border-b px-1 py-2 text-sm text-gray-900 ${
         isEditing ? "rounded-[6px] border-3 border-blue-500 text-blue-500" : ""
       }`}
       style={{ minWidth: "150px", maxWidth: "150px" }}

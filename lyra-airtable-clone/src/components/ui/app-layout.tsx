@@ -10,7 +10,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
-    <div className="flex min-h-screen flex-col">
+    <div className="flex h-screen flex-col">
       <header className="sticky top-0 z-50 flex h-14 items-center justify-between border-b bg-white px-1 shadow-sm">
         <div className="flex items-center gap-2">
           <Button
