@@ -15,8 +15,8 @@ export default function BaseLayout({
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
-    <div className="flex min-h-screen flex-col">
-      <header className="sticky top-0 flex h-14 items-center justify-between bg-green-700 px-1">
+    <div className="flex h-screen flex-col">
+      <header className="sticky top-0 flex min-h-[56px] items-center justify-between bg-green-700 px-1">
         <div className="flex min-w-[60px] items-center">
           <Link href="/home">
             <img

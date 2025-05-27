@@ -108,9 +108,9 @@ export default function BasePage() {
             <Input
               value={baseName}
               onChange={(e) => setBaseName(e.target.value)}
-              onKeyDown={(e) => {
+              onKeyDown={async (e) => {
                 if (e.key === "Enter") {
-                    handleCreateBase();
+                    await handleCreateBase();
                   }
                 }
               }

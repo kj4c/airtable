@@ -109,7 +109,7 @@ export default function BaseDashboard() {
           <ViewSidebar />
           <div className="flex-1 overflow-hidden">
             {selectedTableId && (
-              <div className="h-[calc(100vh-130px)] w-full overflow-auto">
+              <div className="flex-1 min-h-0 w-full overflow-auto">
                 <DataTable tableId={selectedTableId} />
               </div>
             )}
