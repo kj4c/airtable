@@ -3,7 +3,7 @@
 import { useState } from "react";
 import {
   Plus,
-  LayoutGrid,
+  TableCellsSplit,
   CalendarDays,
   Image,
   KanbanSquare,
@@ -47,7 +47,7 @@ export default function ViewSidebar() {
               selectedView === view ? "bg-blue-100 text-blue-600" : "hover:bg-gray-100"
             }`}
           >
-            <LayoutGrid className="w-4 h-4 mr-2" />
+            <TableCellsSplit className="w-4 h-4 mr-2" />
             <span className="flex-1">{view}</span>
             {selectedView === view && <Check className="w-4 h-4 text-blue-600" />}
           </button>
@@ -68,7 +68,7 @@ export default function ViewSidebar() {
       {createOpen && (
         <div className="mt-1 space-y-1 pl-4 text-sm">
           {[
-            { name: "Grid", icon: <LayoutGrid className="w-4 h-4 mr-2 text-blue-500" /> },
+            { name: "Grid", icon: <TableCellsSplit className="w-4 h-4 mr-2 text-blue-500" /> },
             { name: "Calendar", icon: <CalendarDays className="w-4 h-4 mr-2 text-orange-500" /> },
             { name: "Gallery", icon: <Image className="w-4 h-4 mr-2 text-purple-500" /> },
             { name: "Kanban", icon: <KanbanSquare className="w-4 h-4 mr-2 text-green-600" /> },
