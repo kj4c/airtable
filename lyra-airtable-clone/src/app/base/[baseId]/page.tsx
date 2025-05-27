@@ -26,6 +26,13 @@ export default function BaseDashboard() {
     },
   });
 
+  const handleCreate =() => {
+    createTable.mutate({
+    name: `Table ${(baseData?.length ?? 0) + 1}`,
+    baseId: baseId,
+    })
+  }
+
   // 1. Fetch all tables for this base
   const {
     data: baseData,
@@ -68,10 +75,7 @@ export default function BaseDashboard() {
             <Button
               className="ml-2 cursor-pointer bg-transparent text-sm"
               onClick={() =>
-                createTable.mutate({
-                  name: `Table ${(baseData?.length ?? 0) + 1}`,
-                  baseId: baseId,
-                })
+                handleCreate()
               }
             >
               + Add or import

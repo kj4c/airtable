@@ -78,7 +78,7 @@ export function DataTable({ tableId }: DataTableProps) {
     estimateSize: () => 40, // row height estimate
     measureElement:
       typeof window !== 'undefined' &&
-      navigator.userAgent.indexOf('Firefox') === -1
+      navigator.userAgent.includes('Firefox')
         ? element => element?.getBoundingClientRect().height
         : undefined,
     overscan: 10,
@@ -86,7 +86,7 @@ export function DataTable({ tableId }: DataTableProps) {
 
     // Fetch more rows on scroll bottom
   const fetchMoreOnBottomReached = React.useCallback(
-    (containerRefElement?: HTMLDivElement | null) => {
+    async (containerRefElement?: HTMLDivElement | null) => {
       if (containerRefElement) {
         const { scrollHeight, scrollTop, clientHeight } = containerRefElement;
         if (
@@ -94,7 +94,7 @@ export function DataTable({ tableId }: DataTableProps) {
           !isFetching &&
           totalFetched < totalDBRowCount
         ) {
-          fetchNextPage();
+          await fetchNextPage();
         }
       }
     },
@@ -145,7 +145,7 @@ export function DataTable({ tableId }: DataTableProps) {
     <div 
       ref={tableContainerRef}
       className="overflow-auto border relative"
-      style={{ height: "600px" }}
+      style={{ height: "1000px" }}
       onScroll={e => fetchMoreOnBottomReached(e.currentTarget)}
     >
       <table className="box-border min-w-fit w-max table-fixed border-separate border-spacing-0 divide-y divide-gray-200">

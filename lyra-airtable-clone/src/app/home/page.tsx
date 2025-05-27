@@ -47,6 +47,19 @@ export default function BasePage() {
     return null;
   }
 
+  const handleCreateBase = async() => {
+    if (!baseName.trim()) return;
+    const base = await createBase.mutateAsync({ name: baseName });
+
+    if (base?.id) {
+      await createTableMutation.mutateAsync({
+        baseId: base.id,
+        name: "Table 1",
+      });
+    }
+    setOpen(false);
+  }
+
   return (
     <AppLayout>
       <div className="mb-4 flex items-center justify-between">
@@ -73,21 +86,17 @@ export default function BasePage() {
             <Input
               value={baseName}
               onChange={(e) => setBaseName(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                    handleCreateBase();
+                  }
+                }
+              }
               placeholder="Base name"
             />
             <Button
-              onClick={async () => {
-                if (!baseName.trim()) return;
-
-                const base = await createBase.mutateAsync({ name: baseName });
-
-                if (base?.id) {
-                  await createTableMutation.mutateAsync({
-                    baseId: base.id,
-                    name: "Table 1",
-                  });
-                }
-              }}
+              className="cursor-pointer"
+              onClick={handleCreateBase}
             >
               Create
             </Button>
