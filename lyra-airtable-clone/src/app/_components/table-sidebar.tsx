@@ -25,7 +25,7 @@ export default function ViewSidebar() {
   const views = ["Grid 1", "Grid 2", "Grid 3", "Grid 6","Grid 5","Grid 4",];
 
   return (
-    <div className="w-64 h-full overflow-y-auto flex flex-col border-r border-gray-200 px-3 py-2 text-sm text-gray-700">
+    <div className="w-64 h-screen overflow-y-auto flex flex-col border-r border-gray-200 px-3 py-2 text-sm text-gray-700">
       {/* Search bar */}
       <div className="flex items-center mb-2">
         <Search className="w-4 h-4 mr-2 text-gray-400" />
@@ -38,7 +38,7 @@ export default function ViewSidebar() {
 
       <hr className="mb-2 border-blue-600" />
 
-      <div className="h-[100px] overflow-y-auto space-y-1">
+      <div className="h-[20%] overflow-y-auto space-y-1">
         {views.map((view) => (
           <button
             key={view}
@@ -56,7 +56,7 @@ export default function ViewSidebar() {
 
       <hr className="my-2" />
       
-      <div className="flex-1 min-h-0 overflow-y-auto pr-1">
+      <div className="h-[80%] overflow-y-auto">
         <button
           className="flex items-center w-full px-2 py-1 font-medium hover:bg-gray-100 rounded"
           onClick={() => setCreateOpen(!createOpen)}
