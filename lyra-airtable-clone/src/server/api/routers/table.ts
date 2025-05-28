@@ -3,11 +3,12 @@
 import { z } from "zod";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import { db } from "~/server/db";
-import { cells, columns, rows } from "~/server/db/schema";
+import { cells, columns, rows, viewFilters, viewHiddenColumns, viewSorts } from "~/server/db/schema";
 import { generateColumns, generateRows } from "./data";
 import { faker } from "@faker-js/faker";
-import { eq, or } from "drizzle-orm";
-import { sql } from "drizzle-orm";
+import { and, eq, gt, or } from "drizzle-orm";
+import { sql, asc } from "drizzle-orm";
+import { buildOperatorCondition } from "./filter";
 
 async function getColumnsForTable(tableId: string) {
   return db.query.columns.findMany({
@@ -127,44 +128,90 @@ export const tableRouter = createTRPCRouter({
   getTableData: protectedProcedure
     .input(
       z.object({
-        tableId: z.string(),
+        viewId: z.string(),
         limit: z.number(),
         cursor: z.number().optional(),
       }),
     )
     .query(async ({ input }) => {
-      const { tableId, limit, cursor } = input;
+      const { viewId, limit, cursor } = input;
+
+      const view = await db.query.views.findFirst({
+        where: (views, { eq }) => eq(views.id, viewId),
+      });
+
+      if (!view) {
+        throw new Error("View not found");
+      }
+
+      const tableId = view.tableId;
+
+      const [filters, sorts, hiddenColumns, columnsForTable] = await Promise.all([
+        db.query.viewFilters.findMany({ where: eq(viewFilters.viewId, viewId) }),
+        db.query.viewSorts.findMany({ where: eq(viewSorts.viewId, viewId) }),
+        db.query.viewHiddenColumns.findMany({ where: eq(viewHiddenColumns.viewId, viewId) }),
+        db.query.columns.findMany({ where: eq(columns.tableId, tableId) }),
+      ]);
+
+      const visibleColumns = columnsForTable.filter(
+        (col) => !hiddenColumns.find((h) => h.columnId === col.id)
+      );
+
+      const visibleColumnIds = visibleColumns.map((col) => col.id);
+
+      const filterConditions = filters.map((f) =>
+        and(
+          eq(cells.columnId, f.columnId),
+          buildOperatorCondition(cells.value, f.operator, f.value)
+        )
+      );
+
+      const filteredRows = await db
+      .select({
+        id: rows.id,
+        order: rows.order,
+        tableId: rows.tableId,
+      })
+      .from(rows)
+      .leftJoin(cells, eq(cells.rowId, rows.id))
+      .where(
+        and(
+          eq(rows.tableId, tableId),
+          ...(cursor ? [gt(rows.order, cursor)] : []),
+          ...(filterConditions.length > 0 ? [or(...filterConditions)] : [])
+        )
+      )
+      .orderBy(asc(rows.order))
+      .limit(limit);
+
+      // build the where clause based on the filters
+      const whereClauses = [
+        eq(rows.tableId, tableId),
+        cursor ? gt(rows.order, cursor) : undefined,
+      ].filter(Boolean);
 
       const rowsForTable = await db.query.rows.findMany({
-        where: (rows, { eq, gt }) =>
-          cursor
-            ? eq(rows.tableId, tableId) && gt(rows.order, cursor)
-            : eq(rows.tableId, tableId),
-        orderBy: (rows, { asc }) => asc(rows.order),
+        where: and(...whereClauses),
+        orderBy: (rows, { asc }) => asc(rows.order), // rows.order ensures pagination
         limit,
       });
 
       const rowIds = rowsForTable.map((r) => r.id);
 
-      const columnsForTable = await db.query.columns.findMany({
-        where: (c, { eq }) => eq(c.tableId, tableId),
-      });
-
       const cellsForTable = rowIds.length
         ? await db.query.cells.findMany({
             // rowsId is a table of row ids find any cell within this row
-            where: (c, { inArray }) => inArray(c.rowId, rowIds),
+            where: (c, { inArray, and }) => 
+              and(
+                inArray(c.rowId, rowIds),
+                inArray(c.columnId, visibleColumnIds),
+              )
           })
         : [];
 
-      const columnDefs = generateColumns(columnsForTable);
-      const rowData = generateRows(
-        rowsForTable,
-        columnsForTable,
-        cellsForTable,
-      );
-
-      const lastRow = rowsForTable[rowsForTable.length - 1];
+      const columnDefs = generateColumns(visibleColumns);
+      const rowData = generateRows(filteredRows, visibleColumns, cellsForTable);
+      const lastRow = filteredRows[filteredRows.length - 1];
 
       const result = await db
         .select({
