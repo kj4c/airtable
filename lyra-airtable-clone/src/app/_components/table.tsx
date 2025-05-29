@@ -32,15 +32,14 @@ import { useVirtualizer } from '@tanstack/react-virtual'
 // define the type of the data, TData is a generic type
 type DataTableProps = {
   tableId: string;
+  viewId: string;
 };
 
 function capitalizeFirstLetter(str: string) {
   return str.charAt(0).toUpperCase() + str.slice(1);
 } 
 
-
-
-export function DataTable({ tableId }: DataTableProps) {
+export function DataTable({ tableId, viewId }: DataTableProps) {
   const [open, setOpen] = React.useState(false); 
   const [columnName, setColumnName] = React.useState("");
   const [type, setType] = React.useState<"text" | "number">("text");
@@ -54,7 +53,7 @@ export function DataTable({ tableId }: DataTableProps) {
     isFetching,
   } = api.table.getTableData.useInfiniteQuery(
     {
-      tableId,
+      viewId,
       limit: 100,
     },
     {
@@ -120,28 +119,28 @@ export function DataTable({ tableId }: DataTableProps) {
   const createColumn = api.table.createColumn.useMutation({
     onSuccess: async () => {
       await utils.table.getTableData.invalidate({
-        tableId: tableId,
+        viewId: viewId,
         limit: 100,
       });
-      await utils.table.getTableData.refetch({ tableId, limit: 100 });
+      await utils.table.getTableData.refetch({ viewId, limit: 100 });
     },
   });
 
   const createRow = api.table.createRow.useMutation({
     onSuccess: async () => {
       await utils.table.getTableData.invalidate({
-        tableId: tableId,
+        viewId: viewId,
         limit: 100,
       });
-      await utils.table.getTableData.refetch({ tableId, limit: 100 });
+      await utils.table.getTableData.refetch({ viewId, limit: 100 });
     },
   });
 
   // fetch 1k rows
   const insert100kRows = api.table.insert1kRows.useMutation({
     onSuccess: async () => {
-      await utils.table.getTableData.invalidate({ tableId, limit: 100});
-      await utils.table.getTableData.refetch({ tableId, limit: 100 });
+      await utils.table.getTableData.invalidate({ viewId, limit: 100});
+      await utils.table.getTableData.refetch({ viewId, limit: 100 });
     },
   });
 
@@ -254,7 +253,7 @@ export function DataTable({ tableId }: DataTableProps) {
                   {row.index + 1}
                 </td>
                 {row.getVisibleCells().map((cell) => (
-                  <EditableCell key={cell.id} cell={cell} tableId={tableId} />
+                  <EditableCell key={cell.id} cell={cell} tableId={tableId} viewId={viewId}/>
                 ))}
               </tr>
             );

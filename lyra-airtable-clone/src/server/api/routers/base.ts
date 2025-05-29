@@ -3,7 +3,7 @@
 import { z } from "zod";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import { db } from "~/server/db";
-import { bases, tables } from "~/server/db/schema";
+import { bases, tables, views } from "~/server/db/schema";
 
 // each thing is an endpoint, protectprocedure means auth needed.
 //ctx.session.user.id is given by user id
@@ -100,6 +100,15 @@ export const baseRouter = createTRPCRouter({
           name: name,
         })
         .returning();
+
+      if (newTable[0]?.id) {
+        await db
+        .insert(views)
+        .values({
+          name: "Grid View",
+          tableId: newTable[0].id, 
+        });
+      }
 
       return newTable[0];
     }),

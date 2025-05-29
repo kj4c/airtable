@@ -12,9 +12,10 @@ type GetTableDataResult = {
 type EditableCellProps<TData> = {
   cell: Cell<TData, unknown>;
   tableId: string;
+  viewId: string;
 };
 
-export function EditableCell({ cell, tableId }: EditableCellProps<RowData>) {
+export function EditableCell({ cell, tableId, viewId }: EditableCellProps<RowData>) {
   const [isEditing, setIsEditing] = useState(false);
   const initialValue = cell.getValue();
   const [value, setValue] = useState<string>(
@@ -33,7 +34,7 @@ export function EditableCell({ cell, tableId }: EditableCellProps<RowData>) {
 
       // Snapshot previous data
       const previous = utils.table.getTableData.getData({
-        tableId,
+        viewId,
         limit: 100,
       });
 
@@ -43,7 +44,7 @@ export function EditableCell({ cell, tableId }: EditableCellProps<RowData>) {
       // setData updates cache
       // and the returned data immedidately will update since cache is updated
       utils.table.getTableData.setInfiniteData(
-        { tableId, limit: 100 },
+        { viewId, limit: 100 },
         (oldData) => {
           if (!oldData) return oldData;
 
@@ -73,7 +74,7 @@ export function EditableCell({ cell, tableId }: EditableCellProps<RowData>) {
     onError: (_err, _newCell, context) => {
       if (context?.previous) {
         utils.table.getTableData.setData(
-          { tableId, limit: 100 },
+          { viewId, limit: 100 },
           context.previous,
         );
       }
@@ -82,10 +83,10 @@ export function EditableCell({ cell, tableId }: EditableCellProps<RowData>) {
     // Always refetch after success/fail
     onSettled: async () => {
       await utils.table.getTableData.invalidate({
-        tableId,
+        viewId,
         limit: 100,
       });
-      await utils.table.getTableData.refetch({ tableId, limit: 100 });
+      await utils.table.getTableData.refetch({ viewId, limit: 100 });
     },
   });
 

@@ -98,6 +98,7 @@ export const views = pgTable("view", (d) => ({
     .uuid()
     .notNull()
     .references(() => tables.id),
+  createdAt: d.timestamp().defaultNow().notNull(),
 }));
 
 export const viewFilters = pgTable("view_filter", (d) => ({
@@ -113,7 +114,7 @@ export const viewSorts = pgTable("view_sort", (d) => ({
   viewId: d.uuid().notNull().references(() => views.id),
   columnId: d.uuid().notNull().references(() => columns.id),
   direction: d.varchar({ length: 4 }).notNull(),
-  order: d.integer().notNull().default(0),
+  sort_order: d.integer().notNull().default(0),
 }))
 
 export const viewHiddenColumns = pgTable("view_hidden_column", (d) => ({

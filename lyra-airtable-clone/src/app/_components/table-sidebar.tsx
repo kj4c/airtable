@@ -18,11 +18,20 @@ import {
   ChevronRight,
 } from "lucide-react";
 
-export default function ViewSidebar() {
+type viewType = {
+  name: string;
+  id: string;
+}
+type Props = {
+  viewList: viewType[];
+};
+
+export default function ViewSidebar( { viewList }: Props) {
   const [selectedView, setSelectedView] = useState("Grid 2");
   const [createOpen, setCreateOpen] = useState(true);
 
-  const views = ["Grid 1", "Grid 2", "Grid 3", "Grid 6","Grid 5","Grid 4",];
+  // convert viewList to name
+
 
   return (
     <div className="w-64 h-screen overflow-y-auto flex flex-col border-r border-gray-200 px-3 py-2 text-sm text-gray-700">
@@ -39,17 +48,17 @@ export default function ViewSidebar() {
       <hr className="mb-2 border-blue-600" />
 
       <div className="h-[20%] overflow-y-auto space-y-1">
-        {views.map((view) => (
+        {viewList.map((view) => (
           <button
-            key={view}
-            onClick={() => setSelectedView(view)}
+            key={view.id}
+            onClick={() => setSelectedView(view.id)}
             className={`flex items-center w-full text-left px-2 py-1 rounded ${
-              selectedView === view ? "bg-blue-100 text-blue-600" : "hover:bg-gray-100"
+              selectedView === view.id ? "bg-blue-100 text-blue-600" : "hover:bg-gray-100"
             }`}
           >
             <TableCellsSplit className="w-4 h-4 mr-2" />
-            <span className="flex-1">{view}</span>
-            {selectedView === view && <Check className="w-4 h-4 text-blue-600" />}
+            <span className="flex-1">{view.name}</span>
+            {selectedView === view.id && <Check className="w-4 h-4 text-blue-600" />}
           </button>
         ))}
       </div>

@@ -11,12 +11,19 @@ import { ChevronDown } from "lucide-react";
 import TableToolbar from "~/app/_components/table-toolbar";
 import ViewSidebar from "~/app/_components/table-sidebar";
 
+type viewType = {
+  name: string;
+  id: string;
+}
+
 export default function BaseDashboard() {
   const params = useParams<{ baseId: string }>();
   const searchParams = useSearchParams();
   const { baseId } = params;
   const baseName = searchParams.get("name");
   const [selectedTableId, setSelectedTableId] = useState<string | null>(null);
+  const [ views, setViews ] = useState<viewType[]>([]);
+  const [ selectedViewId, setSelectedViewId ] = useState<string | null >(null);
   const utils = api.useUtils();
 
   // add new table
@@ -49,7 +56,7 @@ export default function BaseDashboard() {
     }
   }
 
-  // 1. Fetch all tables for this base
+  // fetch tables
   const {
     data: baseData,
     error,
@@ -62,6 +69,37 @@ export default function BaseDashboard() {
       enabled: !!baseId, // this makes it so that the table runs only if the baseId is not null
     },
   );
+
+  const {
+    data: viewsData,
+  } = api.table.getViews.useQuery(
+    {
+      tableId: selectedTableId ?? "",
+    },
+    {
+      enabled: !!selectedTableId,
+    }
+  )
+
+  useEffect(() => {
+    if (viewsData && viewsData.length > 0) {
+      setSelectedViewId(viewsData?.[0]?.id ?? null);
+    } else {
+      setSelectedViewId(null); 
+    }
+  }, [viewsData]);
+
+  useEffect(() => {
+    if (viewsData) {
+      setViews(viewsData.map((view) => {
+        return {
+          name: view.name,
+          id: view.id,
+        };
+      }));
+    }
+  }, [viewsData]);
+
 
   useEffect(() => {
     const firstTable = baseData?.[0];
@@ -106,11 +144,11 @@ export default function BaseDashboard() {
         </div>
         
         <div className="flex flex-1 overflow-hidden">
-          <ViewSidebar />
+          <ViewSidebar viewList={views} />
           <div className="flex-1 overflow-hidden">
-            {selectedTableId && (
+            {selectedTableId && selectedViewId && (
               <div className="h-screen w-full overflow-auto">
-                <DataTable tableId={selectedTableId} />
+                <DataTable tableId={selectedTableId} viewId={selectedViewId} />
               </div>
             )}
           </div>
