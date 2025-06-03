@@ -102,11 +102,9 @@ export const baseRouter = createTRPCRouter({
         .returning();
 
       if (newTable[0]?.id) {
-        await db
-        .insert(views)
-        .values({
+        await db.insert(views).values({
           name: "Grid View",
-          tableId: newTable[0].id, 
+          tableId: newTable[0].id,
         });
       }
 

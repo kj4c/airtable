@@ -103,24 +103,42 @@ export const views = pgTable("view", (d) => ({
 
 export const viewFilters = pgTable("view_filter", (d) => ({
   id: d.uuid().primaryKey().defaultRandom(),
-  viewId: d.uuid().notNull().references(() => views.id),
-  columnId: d.uuid().notNull().references(() => columns.id),
+  viewId: d
+    .uuid()
+    .notNull()
+    .references(() => views.id),
+  columnId: d
+    .uuid()
+    .notNull()
+    .references(() => columns.id),
   operator: d.varchar({ length: 50 }).notNull(),
   value: d.text(),
 }));
 
 export const viewSorts = pgTable("view_sort", (d) => ({
   id: d.uuid().primaryKey().defaultRandom(),
-  viewId: d.uuid().notNull().references(() => views.id),
-  columnId: d.uuid().notNull().references(() => columns.id),
+  viewId: d
+    .uuid()
+    .notNull()
+    .references(() => views.id),
+  columnId: d
+    .uuid()
+    .notNull()
+    .references(() => columns.id),
   direction: d.varchar({ length: 4 }).notNull(),
   sort_order: d.integer().notNull().default(0),
-}))
+}));
 
 export const viewHiddenColumns = pgTable("view_hidden_column", (d) => ({
   id: d.uuid().primaryKey().defaultRandom(),
-  viewId: d.uuid().notNull().references(() => views.id),
-  columnId: d.uuid().notNull().references(() => columns.id),
+  viewId: d
+    .uuid()
+    .notNull()
+    .references(() => views.id),
+  columnId: d
+    .uuid()
+    .notNull()
+    .references(() => columns.id),
 }));
 
 export const columns = pgTable("column", (d) => ({

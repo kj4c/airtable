@@ -14,7 +14,7 @@ import ViewSidebar from "~/app/_components/table-sidebar";
 type viewType = {
   name: string;
   id: string;
-}
+};
 
 export default function BaseDashboard() {
   const params = useParams<{ baseId: string }>();
@@ -22,8 +22,8 @@ export default function BaseDashboard() {
   const { baseId } = params;
   const baseName = searchParams.get("name");
   const [selectedTableId, setSelectedTableId] = useState<string | null>(null);
-  const [ views, setViews ] = useState<viewType[]>([]);
-  const [ selectedViewId, setSelectedViewId ] = useState<string | null >(null);
+  const [views, setViews] = useState<viewType[]>([]);
+  const [selectedViewId, setSelectedViewId] = useState<string | null>(null);
   const utils = api.useUtils();
 
   // add new table
@@ -43,7 +43,7 @@ export default function BaseDashboard() {
     const newTable = await createTable.mutateAsync({
       name: `Table ${(baseData?.length ?? 0) + 1}`,
       baseId: baseId,
-    })
+    });
 
     if (newTable?.id) {
       setSelectedTableId(newTable.id);
@@ -51,10 +51,10 @@ export default function BaseDashboard() {
       await insertColumn.mutateAsync({
         name: `Name`,
         type: "text",
-        tableId: newTable.id
-      })
+        tableId: newTable.id,
+      });
     }
-  }
+  };
 
   // fetch tables
   const {
@@ -70,35 +70,31 @@ export default function BaseDashboard() {
     },
   );
 
-  const {
-    data: viewsData,
-  } = api.table.getViews.useQuery(
+  const { data: viewsData } = api.table.getViews.useQuery(
     {
       tableId: selectedTableId ?? "",
     },
     {
       enabled: !!selectedTableId,
-    }
-  )
+    },
+  );
 
   useEffect(() => {
-    if (viewsData && viewsData.length > 0) {
-      setSelectedViewId(viewsData?.[0]?.id ?? null);
-    } else {
-      setSelectedViewId(null); 
-    }
-  }, [viewsData]);
+    const fetchViews = async () => {
+      if (!selectedTableId) return;
 
-  useEffect(() => {
-    if (viewsData) {
-      setViews(viewsData.map((view) => {
-        return {
-          name: view.name,
-          id: view.id,
-        };
-      }));
-    }
-  }, [viewsData]);
+      const viewsResponse = await utils.table.getViews.fetch({ tableId: selectedTableId });
+      if (viewsResponse?.length > 0) {
+        setViews(viewsResponse.map(({ id, name }) => ({ id, name })));
+        setSelectedViewId(viewsResponse[0]?.id ?? null);
+      } else {
+        setViews([]);
+        setSelectedViewId(null);
+      }
+    };
+
+    void fetchViews();
+  }, [selectedTableId]);
 
 
   useEffect(() => {
@@ -110,30 +106,28 @@ export default function BaseDashboard() {
 
   return (
     <BaseLayout baseName={baseName ?? "No base name"}>
-      <div className="flex flex-col w-full flex-1">
-        <div className="flex flex-col w-full items-stretch bg-green-800">
-          <div className="ml-2 flex items-end h-8 bg-green-800 px-2">
+      <div className="flex w-full flex-1 flex-col">
+        <div className="flex w-full flex-col items-stretch bg-green-800">
+          <div className="ml-2 flex h-8 items-end bg-green-800 px-2">
             {baseData?.map((t) => (
               <button
                 key={t.id}
                 onClick={() => setSelectedTableId(t.id)}
                 className={`h-8 cursor-pointer rounded-t-xs bg-green-800 px-4 py-1 text-xs ${
                   selectedTableId === t.id
-                    ? "bg-white text-black rounded-b-none border-b-0"
+                    ? "rounded-b-none border-b-0 bg-white text-black"
                     : "bg-gray-200 text-white hover:bg-green-900"
                 }`}
               >
                 {t.name}
-                {selectedTableId === t.id &&
-                  <ChevronDown className="inline ml-1 h-3 w-3" />
-                }
+                {selectedTableId === t.id && (
+                  <ChevronDown className="ml-1 inline h-3 w-3" />
+                )}
               </button>
             ))}
             <Button
-              className="ml-2 cursor-pointer bg-transparent text-sm hover:bg-transparent hover:text-white text-gray-200"
-              onClick={() =>
-                handleCreate()
-              }
+              className="ml-2 cursor-pointer bg-transparent text-sm text-gray-200 hover:bg-transparent hover:text-white"
+              onClick={() => handleCreate()}
             >
               + Add or import
             </Button>
@@ -142,9 +136,11 @@ export default function BaseDashboard() {
             <TableToolbar />
           </div>
         </div>
-        
+
         <div className="flex flex-1 overflow-hidden">
-          <ViewSidebar viewList={views} />
+          {selectedTableId && (
+            <ViewSidebar viewList={views} tableId={selectedTableId} onViewChange={setSelectedViewId} selectedViewId={selectedViewId} />
+          )}
           <div className="flex-1 overflow-hidden">
             {selectedTableId && selectedViewId && (
               <div className="h-screen w-full overflow-auto">

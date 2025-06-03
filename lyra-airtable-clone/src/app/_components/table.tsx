@@ -27,7 +27,7 @@ import { Input } from "../../components/ui/input";
 import { Plus } from "lucide-react";
 import { EditableCell } from "./editable-cell";
 import type { RowData } from "types.tsx";
-import { useVirtualizer } from '@tanstack/react-virtual'
+import { useVirtualizer } from "@tanstack/react-virtual";
 
 // define the type of the data, TData is a generic type
 type DataTableProps = {
@@ -37,53 +37,47 @@ type DataTableProps = {
 
 function capitalizeFirstLetter(str: string) {
   return str.charAt(0).toUpperCase() + str.slice(1);
-} 
+}
 
 export function DataTable({ tableId, viewId }: DataTableProps) {
-  const [open, setOpen] = React.useState(false); 
+  const [open, setOpen] = React.useState(false);
   const [columnName, setColumnName] = React.useState("");
   const [type, setType] = React.useState<"text" | "number">("text");
   const utils = api.useUtils();
-  const tableContainerRef = React.useRef<HTMLDivElement>(null)
+  const tableContainerRef = React.useRef<HTMLDivElement>(null);
 
-  const {
-    data,
-    fetchNextPage,
-    hasNextPage,
-    isFetching,
-  } = api.table.getTableData.useInfiniteQuery(
-    {
-      viewId,
-      limit: 100,
-    },
-    {
-      getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
-    }
-  );
+  const { data, fetchNextPage, hasNextPage, isFetching } =
+    api.table.getTableData.useInfiniteQuery(
+      {
+        viewId,
+        limit: 100,
+      },
+      {
+        getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
+      },
+    );
 
   const columns = data?.pages?.[0]?.columns ?? [];
   const flatData = useMemo(
-    () => data?.pages?.flatMap(page => page.data) ?? [],
-    [data]
+    () => data?.pages?.flatMap((page) => page.data) ?? [],
+    [data],
   );
 
   const totalDBRowCount = data?.pages?.[0]?.meta?.totalRowCount ?? 0;
   const totalFetched = flatData.length;
-
 
   const rowVirtualizer = useVirtualizer({
     count: flatData.length,
     getScrollElement: () => tableContainerRef.current,
     estimateSize: () => 40, // row height estimate
     measureElement:
-      typeof window !== 'undefined' &&
-      navigator.userAgent.includes('Firefox')
-        ? element => element?.getBoundingClientRect().height
+      typeof window !== "undefined" && navigator.userAgent.includes("Firefox")
+        ? (element) => element?.getBoundingClientRect().height
         : undefined,
     overscan: 10,
   });
 
-    // Fetch more rows on scroll bottom
+  // Fetch more rows on scroll bottom
   const fetchMoreOnBottomReached = React.useCallback(
     async (containerRefElement?: HTMLDivElement | null) => {
       if (containerRefElement) {
@@ -97,14 +91,14 @@ export function DataTable({ tableId, viewId }: DataTableProps) {
         }
       }
     },
-    [fetchNextPage, isFetching, totalFetched, totalDBRowCount]
+    [fetchNextPage, isFetching, totalFetched, totalDBRowCount],
   );
 
   React.useEffect(() => {
     const fetchData = async () => {
       await fetchMoreOnBottomReached(tableContainerRef.current);
     };
-    
+
     void fetchData();
   }, [fetchMoreOnBottomReached]);
 
@@ -114,7 +108,6 @@ export function DataTable({ tableId, viewId }: DataTableProps) {
     getCoreRowModel: getCoreRowModel(),
     manualSorting: true,
   });
-  console.log(flatData.map(r => r.order)); 
 
   const createColumn = api.table.createColumn.useMutation({
     onSuccess: async () => {
@@ -139,28 +132,27 @@ export function DataTable({ tableId, viewId }: DataTableProps) {
   // fetch 1k rows
   const insert100kRows = api.table.insert1kRows.useMutation({
     onSuccess: async () => {
-      await utils.table.getTableData.invalidate({ viewId, limit: 100});
+      await utils.table.getTableData.invalidate({ viewId, limit: 100 });
       await utils.table.getTableData.refetch({ viewId, limit: 100 });
     },
   });
 
   return (
-    <div 
+    <div
       ref={tableContainerRef}
       className="relative h-full overflow-auto border"
       onScroll={(e) => fetchMoreOnBottomReached(e.currentTarget)}
     >
-      <table className="box-border min-w-fit w-max table-fixed border-separate border-spacing-0 divide-y divide-gray-200">
-        <thead className="bg-gray-50 sticky top-0 z-10">
+      <table className="box-border w-max min-w-fit table-fixed border-separate border-spacing-0 divide-y divide-gray-200">
+        <thead className="sticky top-0 z-10 bg-gray-50">
           {table.getHeaderGroups().map((headerGroup) => (
             // get the columns
             <tr key={headerGroup.id}>
-              <th className="w-10 bg-gray-100 border-b-1">
-              </th>
+              <th className="w-10 border-b-1 bg-gray-100"></th>
               {headerGroup.headers.map((header) => (
                 <th
                   key={header.id}
-                  className="w-[150px] border-l-0 border-r-1 border-b-1 bg-gray-100 px-4 py-2 text-left text-sm font-light text-black"
+                  className="w-[150px] border-r-1 border-b-1 border-l-0 bg-gray-100 px-4 py-2 text-left text-sm font-light text-black"
                 >
                   {flexRender(
                     header.column.columnDef.header,
@@ -169,7 +161,7 @@ export function DataTable({ tableId, viewId }: DataTableProps) {
                 </th>
               ))}
               {/* Add column for the plus button */}
-              <th className="flex w-[60px] items-center border-b-1 border-r-1 bg-gray-100 justify-center text-left text-sm font-semibold text-black">
+              <th className="flex w-[60px] items-center justify-center border-r-1 border-b-1 bg-gray-100 text-left text-sm font-semibold text-black">
                 <Dialog open={open} onOpenChange={setOpen}>
                   <DialogTrigger asChild>
                     <Button
@@ -231,7 +223,7 @@ export function DataTable({ tableId, viewId }: DataTableProps) {
             </tr>
           ))}
         </thead>
-        <tbody 
+        <tbody
           className="relative block divide-y divide-gray-100 bg-white"
           style={{ height: `${rowVirtualizer.getTotalSize() + 40}px` }}
         >
@@ -240,29 +232,39 @@ export function DataTable({ tableId, viewId }: DataTableProps) {
             // put number
             const row = table.getRowModel().rows[virtualRow.index];
             if (!row) return null; // handle case where row is not found
-            
+
             return (
-              <tr 
+              <tr
                 data-index={virtualRow.index}
                 key={row.id}
-                ref={node => rowVirtualizer.measureElement(node)}
+                ref={(node) => rowVirtualizer.measureElement(node)}
                 className="absolute flex w-full border-b"
-                style={{ transform: `translateY(${virtualRow.start}px)` }} 
+                style={{ transform: `translateY(${virtualRow.start}px)` }}
               >
-                <td className="flex h-10 max-w-[40px] min-w-[40px] border-b-1 items-center justify-center text-sm text-gray-900">
+                <td className="flex h-10 max-w-[40px] min-w-[40px] items-center justify-center border-b-1 text-sm text-gray-900">
                   {row.index + 1}
                 </td>
                 {row.getVisibleCells().map((cell) => (
-                  <EditableCell key={cell.id} cell={cell} tableId={tableId} viewId={viewId}/>
+                  <EditableCell
+                    key={cell.id}
+                    cell={cell}
+                    tableId={tableId}
+                    viewId={viewId}
+                  />
                 ))}
               </tr>
             );
           })}
           <tr
-            className="absolute flex w-[190px] border-b border-r"
-            style={{ transform: `translateY(${rowVirtualizer.getTotalSize()}px)` }}
+            className="absolute flex w-[190px] border-r border-b"
+            style={{
+              transform: `translateY(${rowVirtualizer.getTotalSize()}px)`,
+            }}
           >
-            <td className="flex w-full items-center justify-start" colSpan={columns.length}>
+            <td
+              className="flex w-full items-center justify-start"
+              colSpan={columns.length}
+            >
               <div className="flex items-center space-x-2">
                 <Button
                   onClick={() => {
@@ -276,7 +278,7 @@ export function DataTable({ tableId, viewId }: DataTableProps) {
                   <Plus className="text-gray-500 transition-colors" />
                 </Button>
                 <Button
-                  className=" border-1 h-2 cursor-pointer bg-white text-black hover:bg-gray-50"
+                  className="h-2 cursor-pointer border-1 bg-white text-black hover:bg-gray-50"
                   onClick={() => {
                     insert100kRows.mutate({
                       tableId: tableId,

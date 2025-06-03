@@ -30,10 +30,7 @@ export default function BaseLayout({
       </header>
 
       <div className="flex flex-1">
-        {/* Main content */}
-        <main className="flex-1 overflow-hidden bg-white">
-          {children}
-        </main>
+        <main className="flex-1 overflow-hidden bg-white">{children}</main>
       </div>
     </div>
   );

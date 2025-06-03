@@ -9,4 +9,4 @@ export type filterType = {
   viewId: string;
   columnId: string;
   value: string | null;
-}
+};

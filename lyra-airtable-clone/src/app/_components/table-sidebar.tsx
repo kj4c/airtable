@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Plus,
   TableCellsSplit,
@@ -17,6 +17,7 @@ import {
   ChevronDown,
   ChevronRight,
 } from "lucide-react";
+import { api } from "~/trpc/react";
 
 type viewType = {
   name: string;
@@ -24,14 +25,21 @@ type viewType = {
 }
 type Props = {
   viewList: viewType[];
+  tableId: string;
+  onViewChange: (viewId: string) => void;
+  selectedViewId: string | null;
 };
 
-export default function ViewSidebar( { viewList }: Props) {
-  const [selectedView, setSelectedView] = useState("Grid 2");
+export default function ViewSidebar( { viewList, tableId, onViewChange, selectedViewId }: Props) {
   const [createOpen, setCreateOpen] = useState(true);
+  const utils = api.useUtils();
 
-  // convert viewList to name
-
+  const createView = api.table.createView.useMutation({
+    onSuccess: async () => {
+      // invalidate cache
+      await utils.table.getViews.invalidate();
+    },
+  })
 
   return (
     <div className="w-64 h-screen overflow-y-auto flex flex-col border-r border-gray-200 px-3 py-2 text-sm text-gray-700">
@@ -51,14 +59,16 @@ export default function ViewSidebar( { viewList }: Props) {
         {viewList.map((view) => (
           <button
             key={view.id}
-            onClick={() => setSelectedView(view.id)}
+            onClick={() => {
+              onViewChange(view.id);
+            }}
             className={`flex items-center w-full text-left px-2 py-1 rounded ${
-              selectedView === view.id ? "bg-blue-100 text-blue-600" : "hover:bg-gray-100"
+              selectedViewId === view.id ? "bg-blue-100 text-blue-600" : "hover:bg-gray-100"
             }`}
           >
             <TableCellsSplit className="w-4 h-4 mr-2" />
             <span className="flex-1">{view.name}</span>
-            {selectedView === view.id && <Check className="w-4 h-4 text-blue-600" />}
+            {selectedViewId === view.id && <Check className="w-4 h-4 text-blue-600" />}
           </button>
         ))}
       </div>
@@ -77,7 +87,7 @@ export default function ViewSidebar( { viewList }: Props) {
         {createOpen && (
           <div className="mt-1 space-y-1 pl-4 text-sm">
             {[
-              { name: "Grid", icon: <TableCellsSplit className="w-4 h-4 mr-2 text-blue-500" /> },
+              { name: "Grid", icon: <TableCellsSplit className="w-4 h-4 mr-2 text-blue-500" />, onClick: () => createView.mutate({ name: "New Grid View" , tableId: tableId })},
               { name: "Calendar", icon: <Calendar1 className="w-4 h-4 mr-2 text-orange-500" /> },
               { name: "Gallery", icon: <LayoutGrid className="w-4 h-4 mr-2 text-purple-500" /> },
               { name: "Kanban", icon: <KanbanSquare className="w-4 h-4 mr-2 text-green-600" /> },
@@ -89,9 +99,10 @@ export default function ViewSidebar( { viewList }: Props) {
             ].map((view) => (
               <div
                 key={view.name}
-                className="flex items-center justify-between px-2 py-1 rounded hover:bg-gray-100"
+                className="flex items-center justify-between px-2 py-1 rounded hover:bg-gray-100 cursor-pointer"
+                onClick={view.onClick ? view.onClick : undefined}
               >
-                <div className="flex items-center">
+                <div className="flex items-center cursor-pointer">
                   {view.icon}
                   <span>{view.name}</span>
                   {view.tag && (

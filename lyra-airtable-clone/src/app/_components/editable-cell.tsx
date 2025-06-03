@@ -15,7 +15,11 @@ type EditableCellProps<TData> = {
   viewId: string;
 };
 
-export function EditableCell({ cell, tableId, viewId }: EditableCellProps<RowData>) {
+export function EditableCell({
+  cell,
+  tableId,
+  viewId,
+}: EditableCellProps<RowData>) {
   const [isEditing, setIsEditing] = useState(false);
   const initialValue = cell.getValue();
   const [value, setValue] = useState<string>(
@@ -63,9 +67,8 @@ export function EditableCell({ cell, tableId, viewId }: EditableCellProps<RowDat
               };
             }),
           };
-        }
+        },
       );
-
 
       return { previous };
     },
@@ -101,7 +104,7 @@ export function EditableCell({ cell, tableId, viewId }: EditableCellProps<RowDat
 
   return (
     <td
-      className={`border-box h-10 w-[150px] overflow-hidden cursor-pointer border-r border-b px-1 py-2 text-sm text-gray-900 ${
+      className={`border-box h-10 w-[150px] cursor-pointer overflow-hidden border-r border-b px-1 py-2 text-sm text-gray-900 ${
         isEditing ? "rounded-[6px] border-3 border-blue-500 text-blue-500" : ""
       }`}
       style={{ minWidth: "150px", maxWidth: "150px" }}
@@ -123,7 +126,7 @@ export function EditableCell({ cell, tableId, viewId }: EditableCellProps<RowDat
           }}
         />
       ) : (
-        <div className="w-full truncate whitespace-nowrap overflow-hidden text-ellipsis">
+        <div className="w-full truncate overflow-hidden text-ellipsis whitespace-nowrap">
           {/* {value} */}
           {flexRender(cell.column.columnDef.cell, cell.getContext())}
         </div>

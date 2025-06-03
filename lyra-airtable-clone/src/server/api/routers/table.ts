@@ -3,7 +3,15 @@
 import { z } from "zod";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import { db } from "~/server/db";
-import { cells, columns, rows, viewFilters, viewHiddenColumns, viewSorts } from "~/server/db/schema";
+import {
+  cells,
+  columns,
+  rows,
+  viewFilters,
+  viewHiddenColumns,
+  views,
+  viewSorts,
+} from "~/server/db/schema";
 import { generateColumns, generateRows } from "./data";
 import { faker } from "@faker-js/faker";
 import { and, desc, eq, gt, or } from "drizzle-orm";
@@ -111,19 +119,42 @@ export const tableRouter = createTRPCRouter({
       return newCell[0];
     }),
 
+  createView: protectedProcedure
+    .input(
+      z.object({
+        name: z.string().min(1),
+        tableId: z.string(),
+      }),
+    )
+    .mutation(async ({ input }) => {
+      const { name, tableId } = input;
+
+      // create a new view in the database
+      const newView = await db
+        .insert(views)
+        .values({
+          name,
+          tableId,
+        })
+        .returning();
+
+      return newView[0];
+    }),
+
   // get all views
   getViews: protectedProcedure
     .input(
       z.object({
         tableId: z.string(),
-      })
-    ).query(async ({ input }) => {
+      }),
+    )
+    .query(async ({ input }) => {
       const { tableId } = input;
 
       const viewData = await db.query.views.findMany({
         where: (views, { eq }) => eq(views.tableId, tableId),
         orderBy: (views, { asc }) => asc(views.createdAt),
-      })
+      });
 
       return viewData;
     }),
@@ -163,24 +194,32 @@ export const tableRouter = createTRPCRouter({
 
       const tableId = view.tableId;
 
-      const [filters, sorts, hiddenColumns, columnsForTable] = await Promise.all([
-        db.query.viewFilters.findMany({ where: eq(viewFilters.viewId, viewId) }),
-        db.query.viewSorts.findMany({ where: eq(viewSorts.viewId, viewId) }),
-        db.query.viewHiddenColumns.findMany({ where: eq(viewHiddenColumns.viewId, viewId) }),
-        db.query.columns.findMany({ where: eq(columns.tableId, tableId) }),
-      ]);
+      const [filters, sorts, hiddenColumns, columnsForTable] =
+        await Promise.all([
+          db.query.viewFilters.findMany({
+            where: eq(viewFilters.viewId, viewId),
+          }),
+          db.query.viewSorts.findMany({ where: eq(viewSorts.viewId, viewId) }),
+          db.query.viewHiddenColumns.findMany({
+            where: eq(viewHiddenColumns.viewId, viewId),
+          }),
+          db.query.columns.findMany({ where: eq(columns.tableId, tableId) }),
+        ]);
 
       const visibleColumns = columnsForTable.filter(
-        (col) => !hiddenColumns.find((h) => h.columnId === col.id)
+        (col) => !hiddenColumns.find((h) => h.columnId === col.id),
       );
       const visibleColumnIds = visibleColumns.map((col) => col.id);
 
-      const filterConditions = filters.length > 0 
-      ? filters.map((f) => and(
-          eq(cells.columnId, f.columnId),
-          buildOperatorCondition(cells.value, f.operator, f.value)
-        ))
-      : [];
+      const filterConditions =
+        filters.length > 0
+          ? filters.map((f) =>
+              and(
+                eq(cells.columnId, f.columnId),
+                buildOperatorCondition(cells.value, f.operator, f.value),
+              ),
+            )
+          : [];
 
       // Build base where conditions
       const baseConditions = [
@@ -189,61 +228,61 @@ export const tableRouter = createTRPCRouter({
       ];
 
       // build sort conditions
-      const sortConditions = sorts.length > 0
-      ? sorts
-      // order it based on the order of the sorts
-        .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
-        .map((s) => {
-          const cellValueSql = sql`(
+      const sortConditions =
+        sorts.length > 0
+          ? sorts
+              // order it based on the order of the sorts
+              .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
+              .map((s) => {
+                const cellValueSql = sql`(
             SELECT ${cells.value} 
             FROM ${cells} 
             WHERE ${cells.rowId} = ${rows.id} 
               AND ${cells.columnId} = ${s.columnId}
             LIMIT 1
           )`;
-          return s.direction === "asc"
-            ? asc(cellValueSql)
-            : desc(cellValueSql);
-        })
-        : [asc(rows.order)];
-        
+                return s.direction === "asc"
+                  ? asc(cellValueSql)
+                  : desc(cellValueSql);
+              })
+          : [asc(rows.order)];
+
       const filteredRows = await db
-      .select({
-        id: rows.id,
-        order: rows.order,
-        tableId: rows.tableId,
-      })
-      .from(rows)
-      .leftJoin(cells, eq(cells.rowId, rows.id))
-      .where(
-        and(
-          ...baseConditions,
-          ...(filterConditions.length > 0 ? [or(...filterConditions)] : [])
+        .select({
+          id: rows.id,
+          order: rows.order,
+          tableId: rows.tableId,
+        })
+        .from(rows)
+        .leftJoin(cells, eq(cells.rowId, rows.id))
+        .where(
+          and(
+            ...baseConditions,
+            ...(filterConditions.length > 0 ? [or(...filterConditions)] : []),
+          ),
         )
-      )
-      .orderBy(...sortConditions)
-      .limit(limit);
+        .orderBy(...sortConditions)
+        .limit(limit);
 
       const rowIds = filteredRows.map((r) => r.id);
       const cellsForTable = rowIds.length
         ? await db.query.cells.findMany({
             // rowsId is a table of row ids find any cell within this row
-            where: (c, { inArray, and }) => 
+            where: (c, { inArray, and }) =>
               and(
                 inArray(c.rowId, rowIds),
                 inArray(c.columnId, visibleColumnIds),
-              )
+              ),
           })
-      : [];
+        : [];
 
-        
       const result = await db
-      .select({
-        count: sql<number>`count(*)`,
-      })
-      .from(rows)
-      .where(eq(rows.tableId, tableId));
-        
+        .select({
+          count: sql<number>`count(*)`,
+        })
+        .from(rows)
+        .where(eq(rows.tableId, tableId));
+
       const columnDefs = generateColumns(visibleColumns);
       const rowData = generateRows(filteredRows, visibleColumns, cellsForTable);
       const lastRow = filteredRows[filteredRows.length - 1];
@@ -255,7 +294,7 @@ export const tableRouter = createTRPCRouter({
         nextCursor: lastRow?.order ?? null,
         meta: {
           totalRowCount,
-        }
+        },
       };
     }),
 
