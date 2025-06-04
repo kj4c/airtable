@@ -85,11 +85,12 @@ export function EditableCell({
 
     // Always refetch after success/fail
     onSettled: async () => {
-      await utils.table.getTableData.invalidate({
-        viewId,
-        limit: 100,
-      });
-      await utils.table.getTableData.refetch({ viewId, limit: 100 });
+      await utils.table.getTableData.invalidate();
+      utils.table.getTableData.setInfiniteData(
+        { viewId, limit: 100 },
+        undefined,
+      );
+      await utils.table.getTableData.refetch();
     },
   });
 
@@ -127,8 +128,8 @@ export function EditableCell({
         />
       ) : (
         <div className="w-full truncate overflow-hidden text-ellipsis whitespace-nowrap">
-          {/* {value} */}
-          {flexRender(cell.column.columnDef.cell, cell.getContext())}
+          {value}
+          {/* {flexRender(cell.column.columnDef.cell, cell.getContext())} */}
         </div>
       )}
     </td>

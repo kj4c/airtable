@@ -10,7 +10,6 @@ import React from "react";
 import { ChevronDown } from "lucide-react";
 import TableToolbar from "~/app/_components/table-toolbar";
 import ViewSidebar from "~/app/_components/table-sidebar";
-import SortDialog from "~/components/ui/sort-dialog";
 
 type viewType = {
   name: string;
@@ -72,31 +71,19 @@ export default function BaseDashboard() {
   );
 
   const { data: viewsData } = api.table.getViews.useQuery(
-    {
-      tableId: selectedTableId ?? "",
-    },
-    {
-      enabled: !!selectedTableId,
-    },
+    { tableId: selectedTableId ?? "" },
+    { enabled: !!selectedTableId },
   );
 
   useEffect(() => {
-    const fetchViews = async () => {
-      if (!selectedTableId) return;
-
-      const viewsResponse = await utils.table.getViews.fetch({ tableId: selectedTableId });
-      if (viewsResponse?.length > 0) {
-        setViews(viewsResponse.map(({ id, name }) => ({ id, name })));
-        setSelectedViewId(viewsResponse[0]?.id ?? null);
-      } else {
-        setViews([]);
-        setSelectedViewId(null);
-      }
-    };
-
-    void fetchViews();
-  }, [selectedTableId]);
-
+    if (viewsData && viewsData.length > 0) {
+      setViews(viewsData.map(({ id, name }) => ({ id, name })));
+      setSelectedViewId(viewsData[0]?.id ?? null);
+    } else {
+      setViews([]);
+      setSelectedViewId(null);
+    }
+  }, [viewsData]);
 
   useEffect(() => {
     const firstTable = baseData?.[0];
@@ -134,13 +121,20 @@ export default function BaseDashboard() {
             </Button>
           </div>
           <div className="border-t-0">
-            <TableToolbar />
+            {selectedTableId && selectedViewId && (
+              <TableToolbar tableId={selectedTableId} viewId={selectedViewId} />
+            )}
           </div>
         </div>
 
         <div className="flex flex-1 overflow-hidden">
           {selectedTableId && (
-            <ViewSidebar viewList={views} tableId={selectedTableId} onViewChange={setSelectedViewId} selectedViewId={selectedViewId} />
+            <ViewSidebar
+              viewList={views}
+              tableId={selectedTableId}
+              onViewChange={setSelectedViewId}
+              selectedViewId={selectedViewId}
+            />
           )}
           <div className="flex-1 overflow-hidden">
             {selectedTableId && selectedViewId && (

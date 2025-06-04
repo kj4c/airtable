@@ -18,10 +18,24 @@ import { and, desc, eq, gt, or } from "drizzle-orm";
 import { sql, asc } from "drizzle-orm";
 import { buildOperatorCondition } from "./filter";
 
-async function getColumnsForTable(tableId: string) {
-  return db.query.columns.findMany({
-    where: (columns, { eq }) => eq(columns.tableId, tableId),
-  });
+async function getColumnsForTable(tableId: string, viewId?: string) {
+  const [allColumns, hiddenColumns] = await Promise.all([
+    db.query.columns.findMany({
+      where: (columns, { eq }) => eq(columns.tableId, tableId),
+    }),
+    viewId
+      ? db.query.viewHiddenColumns.findMany({
+          where: (h, { eq }) => eq(h.viewId, viewId),
+        })
+      : Promise.resolve([]),
+  ]);
+
+  const hiddenColumnIds = new Set(hiddenColumns.map((h) => h.columnId));
+  const visibleColumns = allColumns.filter(
+    (col) => !hiddenColumnIds.has(col.id),
+  );
+
+  return visibleColumns;
 }
 
 export const tableRouter = createTRPCRouter({
@@ -164,12 +178,13 @@ export const tableRouter = createTRPCRouter({
     .input(
       z.object({
         tableId: z.string(),
+        viewId: z.string().optional(),
       }),
     )
     .query(async ({ input }) => {
       const { tableId } = input;
 
-      const columnsData = await getColumnsForTable(tableId);
+      const columnsData = await getColumnsForTable(tableId, input.viewId);
       return columnsData;
     }),
 
@@ -194,21 +209,14 @@ export const tableRouter = createTRPCRouter({
 
       const tableId = view.tableId;
 
-      const [filters, sorts, hiddenColumns, columnsForTable] =
-        await Promise.all([
-          db.query.viewFilters.findMany({
-            where: eq(viewFilters.viewId, viewId),
-          }),
-          db.query.viewSorts.findMany({ where: eq(viewSorts.viewId, viewId) }),
-          db.query.viewHiddenColumns.findMany({
-            where: eq(viewHiddenColumns.viewId, viewId),
-          }),
-          db.query.columns.findMany({ where: eq(columns.tableId, tableId) }),
-        ]);
+      const [filters, sorts, visibleColumns] = await Promise.all([
+        db.query.viewFilters.findMany({
+          where: eq(viewFilters.viewId, viewId),
+        }),
+        db.query.viewSorts.findMany({ where: eq(viewSorts.viewId, viewId) }),
+        getColumnsForTable(tableId, viewId),
+      ]);
 
-      const visibleColumns = columnsForTable.filter(
-        (col) => !hiddenColumns.find((h) => h.columnId === col.id),
-      );
       const visibleColumnIds = visibleColumns.map((col) => col.id);
 
       const filterConditions =

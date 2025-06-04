@@ -6,7 +6,7 @@ import {
   getCoreRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import React, { useMemo } from "react";
+import React, { useEffect, useMemo } from "react";
 import { Button } from "../../components/ui/button";
 import { api } from "~/trpc/react";
 import {
@@ -94,13 +94,18 @@ export function DataTable({ tableId, viewId }: DataTableProps) {
     [fetchNextPage, isFetching, totalFetched, totalDBRowCount],
   );
 
-  React.useEffect(() => {
+  useEffect(() => {
     const fetchData = async () => {
       await fetchMoreOnBottomReached(tableContainerRef.current);
     };
 
     void fetchData();
   }, [fetchMoreOnBottomReached]);
+
+  const tableVersionKey = useMemo(
+    () => `${viewId}-${flatData.map((r) => r.id).join("-")}`,
+    [viewId, flatData],
+  );
 
   const table = useReactTable({
     data: flatData,
@@ -143,7 +148,11 @@ export function DataTable({ tableId, viewId }: DataTableProps) {
       className="relative h-full overflow-auto border"
       onScroll={(e) => fetchMoreOnBottomReached(e.currentTarget)}
     >
-      <table className="box-border w-max min-w-fit table-fixed border-separate border-spacing-0 divide-y divide-gray-200">
+      {/* by putting in the key it forces a rerender when key changes which the key changes when new data comes in */}
+      <table
+        key={tableVersionKey}
+        className="box-border w-max min-w-fit table-fixed border-separate border-spacing-0 divide-y divide-gray-200"
+      >
         <thead className="sticky top-0 z-10 bg-gray-50">
           {table.getHeaderGroups().map((headerGroup) => (
             // get the columns
