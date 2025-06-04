@@ -10,6 +10,7 @@ import React from "react";
 import { ChevronDown } from "lucide-react";
 import TableToolbar from "~/app/_components/table-toolbar";
 import ViewSidebar from "~/app/_components/table-sidebar";
+import SortDialog from "~/components/ui/sort-dialog";
 
 type viewType = {
   name: string;

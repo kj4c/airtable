@@ -11,6 +11,7 @@ import {
   ChevronDown,
   Users,
 } from "lucide-react";
+import SortDialog from "~/components/ui/sort-dialog";
 
 const TableToolbar = () => {
   return (
@@ -51,10 +52,8 @@ const TableToolbar = () => {
       </button>
 
       {/* Sort */}
-      <button className="flex items-center space-x-1 rounded px-2 py-1 hover:bg-gray-100">
-        <SortAsc className="h-4 w-4" />
-        <span>Sort</span>
-      </button>
+      <SortDialog />
+
 
       {/* Color */}
       <button className="flex items-center space-x-1 rounded px-2 py-1 hover:bg-gray-100">
