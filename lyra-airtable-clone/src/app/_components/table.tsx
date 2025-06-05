@@ -6,7 +6,7 @@ import {
   getCoreRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import React, { useEffect, useMemo } from "react";
+import React, { useEffect, useMemo, useCallback } from "react";
 import { Button } from "../../components/ui/button";
 import { api } from "~/trpc/react";
 import {
@@ -57,19 +57,50 @@ export function DataTable({ tableId, viewId }: DataTableProps) {
       },
     );
 
-  const columns = data?.pages?.[0]?.columns ?? [];
-  const flatData = useMemo(
-    () => data?.pages?.flatMap((page) => page.data) ?? [],
-    [data],
-  );
+  // get all columns memoised
+  const columns = useMemo(() => {
+    return data?.pages?.[0]?.columns ?? [];
+  }, [data?.pages?.[0]?.columns, viewId]);
+
+  const { data: sorts = [] } = api.sorts.getSorts.useQuery({ viewId });
+
+  const flatData = useMemo(() => {
+    const seenIds = new Set<string>();
+    const deduplicatedData: RowData[] = [];
+
+    console.log("NEW FLAT");
+    for (const page of data?.pages ?? []) {
+      for (const row of page.data) {
+        if (!seenIds.has(row.id)) {
+          seenIds.add(row.id);
+          deduplicatedData.push(row);
+        }
+      }
+    }
+
+    return deduplicatedData;
+  }, [data?.pages, viewId]);
 
   const totalDBRowCount = data?.pages?.[0]?.meta?.totalRowCount ?? 0;
   const totalFetched = flatData.length;
 
+  // Stable table instance that resets when view changes
+  const table = useReactTable({
+    data: flatData,
+    columns,
+    getCoreRowModel: getCoreRowModel(),
+    manualSorting: true,
+  });
+
+  const tableResetKey = useMemo(() => {
+    const sortKey = sorts.map((s) => `${s.columnId}:${s.direction}`).join("|");
+    return `table-${viewId}-${sortKey}`;
+  }, [viewId, sorts]);
+
   const rowVirtualizer = useVirtualizer({
     count: flatData.length,
     getScrollElement: () => tableContainerRef.current,
-    estimateSize: () => 40, // row height estimate
+    estimateSize: () => 40,
     measureElement:
       typeof window !== "undefined" && navigator.userAgent.includes("Firefox")
         ? (element) => element?.getBoundingClientRect().height
@@ -77,8 +108,7 @@ export function DataTable({ tableId, viewId }: DataTableProps) {
     overscan: 10,
   });
 
-  // Fetch more rows on scroll bottom
-  const fetchMoreOnBottomReached = React.useCallback(
+  const fetchMoreOnBottomReached = useCallback(
     async (containerRefElement?: HTMLDivElement | null) => {
       if (containerRefElement) {
         const { scrollHeight, scrollTop, clientHeight } = containerRefElement;
@@ -94,33 +124,21 @@ export function DataTable({ tableId, viewId }: DataTableProps) {
     [fetchNextPage, isFetching, totalFetched, totalDBRowCount],
   );
 
-  useEffect(() => {
+  React.useEffect(() => {
     const fetchData = async () => {
       await fetchMoreOnBottomReached(tableContainerRef.current);
     };
-
+    
     void fetchData();
   }, [fetchMoreOnBottomReached]);
 
-  const tableVersionKey = useMemo(
-    () => `${viewId}-${flatData.map((r) => r.id).join("-")}`,
-    [viewId, flatData],
-  );
-
-  const table = useReactTable({
-    data: flatData,
-    columns,
-    getCoreRowModel: getCoreRowModel(),
-    manualSorting: true,
-  });
-
+  // invalidate the tables
   const createColumn = api.table.createColumn.useMutation({
     onSuccess: async () => {
       await utils.table.getTableData.invalidate({
         viewId: viewId,
         limit: 100,
       });
-      await utils.table.getTableData.refetch({ viewId, limit: 100 });
     },
   });
 
@@ -130,17 +148,45 @@ export function DataTable({ tableId, viewId }: DataTableProps) {
         viewId: viewId,
         limit: 100,
       });
-      await utils.table.getTableData.refetch({ viewId, limit: 100 });
     },
   });
 
-  // fetch 1k rows
-  const insert100kRows = api.table.insert1kRows.useMutation({
+  const insert1kRows = api.table.insert1kRows.useMutation({
     onSuccess: async () => {
-      await utils.table.getTableData.invalidate({ viewId, limit: 100 });
-      await utils.table.getTableData.refetch({ viewId, limit: 100 });
+      await utils.table.getTableData.invalidate({ 
+        viewId, 
+        limit: 100 
+      });
     },
   });
+
+  const handleCreateColumn = useCallback(() => {
+    if (columnName.trim()) {
+      createColumn.mutate({
+        name: columnName,
+        type: type,
+        tableId: tableId,
+      });
+      setColumnName("");
+      setType("text");
+      setOpen(false);
+    }
+    utils.table.getColumns.invalidate();
+  }, [columnName, type, tableId, createColumn]);
+
+  // Handle row creation
+  const handleCreateRow = useCallback(() => {
+    createRow.mutate({
+      tableId: tableId,
+    });
+  }, [tableId, createRow]);
+
+  // Handle bulk insert
+  const handleInsert1kRows = useCallback(() => {
+    insert1kRows.mutate({
+      tableId: tableId,
+    });
+  }, [tableId, insert1kRows]);
 
   return (
     <div
@@ -148,14 +194,13 @@ export function DataTable({ tableId, viewId }: DataTableProps) {
       className="relative h-full overflow-auto border"
       onScroll={(e) => fetchMoreOnBottomReached(e.currentTarget)}
     >
-      {/* by putting in the key it forces a rerender when key changes which the key changes when new data comes in */}
-      <table
-        key={tableVersionKey}
+      <table 
+        /* forces table to rerender whenever sort is added or view is changed! */
+        key={tableResetKey} 
         className="box-border w-max min-w-fit table-fixed border-separate border-spacing-0 divide-y divide-gray-200"
       >
         <thead className="sticky top-0 z-10 bg-gray-50">
           {table.getHeaderGroups().map((headerGroup) => (
-            // get the columns
             <tr key={headerGroup.id}>
               <th className="w-10 border-b-1 bg-gray-100"></th>
               {headerGroup.headers.map((header) => (
@@ -169,7 +214,6 @@ export function DataTable({ tableId, viewId }: DataTableProps) {
                   )}
                 </th>
               ))}
-              {/* Add column for the plus button */}
               <th className="flex w-[60px] items-center justify-center border-r-1 border-b-1 bg-gray-100 text-left text-sm font-semibold text-black">
                 <Dialog open={open} onOpenChange={setOpen}>
                   <DialogTrigger asChild>
@@ -210,21 +254,11 @@ export function DataTable({ tableId, viewId }: DataTableProps) {
                       </DropdownMenuContent>
                     </DropdownMenu>
                     <Button
-                      onClick={() => {
-                        if (columnName.trim()) {
-                          createColumn.mutate({
-                            name: columnName,
-                            type: type,
-                            tableId: tableId,
-                          });
-                          setColumnName("");
-                          setType("text");
-                          setOpen(false);
-                        }
-                      }}
+                      onClick={handleCreateColumn}
                       className="cursor-pointer text-white"
+                      disabled={createColumn.isPending}
                     >
-                      Create column
+                      {createColumn.isPending ? "Creating..." : "Create column"}
                     </Button>
                   </DialogContent>
                 </Dialog>
@@ -237,10 +271,8 @@ export function DataTable({ tableId, viewId }: DataTableProps) {
           style={{ height: `${rowVirtualizer.getTotalSize() + 40}px` }}
         >
           {rowVirtualizer.getVirtualItems().map((virtualRow) => {
-            // display the rows
-            // put number
             const row = table.getRowModel().rows[virtualRow.index];
-            if (!row) return null; // handle case where row is not found
+            if (!row) return null;
 
             return (
               <tr
@@ -276,25 +308,19 @@ export function DataTable({ tableId, viewId }: DataTableProps) {
             >
               <div className="flex items-center space-x-2">
                 <Button
-                  onClick={() => {
-                    createRow.mutate({
-                      tableId: tableId,
-                    });
-                  }}
+                  onClick={handleCreateRow}
                   size="icon"
                   className="w-10 cursor-pointer items-center justify-center rounded-none bg-white text-black shadow-none hover:bg-gray-50"
+                  disabled={createRow.isPending}
                 >
                   <Plus className="text-gray-500 transition-colors" />
                 </Button>
                 <Button
                   className="h-2 cursor-pointer border-1 bg-white text-black hover:bg-gray-50"
-                  onClick={() => {
-                    insert100kRows.mutate({
-                      tableId: tableId,
-                    });
-                  }}
+                  onClick={handleInsert1kRows}
+                  disabled={insert1kRows.isPending}
                 >
-                  Add 1k rows
+                  {insert1kRows.isPending ? "Adding..." : "Add 1k rows"}
                 </Button>
               </div>
             </td>

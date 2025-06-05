@@ -52,20 +52,25 @@ export function generateRows(
   cols: DBColumn[],
   cells: DBCell[],
 ): RowData[] {
-  return rows.map((row) => {
-    const cellData = cells.filter((cell) => cell.rowId === row.id);
+  const cellMap = new Map<string, DBCell[]>();
 
-    // get the row id and then get the value for each column.
+  for (const cell of cells) {
+    if (!cellMap.has(cell.rowId)) {
+      cellMap.set(cell.rowId, []);
+    }
+    cellMap.get(cell.rowId)!.push(cell);
+  }
+
+  return rows.map((row) => {
     const rowData: RowData = {
       id: row.id,
     };
 
-    cellData.forEach((cell) => {
-      const foundCol = cols.find((col) => col.id === cell.columnId);
-      if (foundCol) {
-        rowData[foundCol.id] = cell.value ?? "";
-      }
-    });
+    const cellData = cellMap.get(row.id) ?? [];
+
+    for (const cell of cellData) {
+      rowData[cell.columnId] = cell.value ?? "";
+    }
 
     return rowData;
   });

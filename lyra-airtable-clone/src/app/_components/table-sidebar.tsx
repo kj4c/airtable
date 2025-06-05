@@ -40,9 +40,13 @@ export default function ViewSidebar({
   const utils = api.useUtils();
 
   const createView = api.table.createView.useMutation({
-    onSuccess: async () => {
-      // invalidate cache
-      await utils.table.getViews.invalidate();
+    onSuccess: async (newView) => {
+      if (newView?.id) {
+        onViewChange(newView.id);
+        await utils.table.getViews.invalidate();
+      } else {
+        console.error("Failed to create view: missing ID");
+      }
     },
   });
 

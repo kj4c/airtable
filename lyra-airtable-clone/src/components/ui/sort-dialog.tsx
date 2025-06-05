@@ -30,6 +30,7 @@ export default function SortDialog({ tableId, viewId }: Props) {
   const createSort = api.sorts.createSort.useMutation({
     onSuccess: async () => {
       await utils.sorts.getSorts.invalidate({ viewId });
+      await utils.sorts.getSorts.refetch({ viewId });
       await utils.table.getTableData.invalidate({ viewId, limit: 100 });
 			await utils.table.getTableData.refetch({ viewId, limit: 100 });
     },
@@ -38,9 +39,9 @@ export default function SortDialog({ tableId, viewId }: Props) {
   const updateSort = api.sorts.updateSort.useMutation({
     onSuccess: async () => {
       await utils.sorts.getSorts.invalidate({ viewId });
+      await utils.sorts.getSorts.refetch({ viewId });
 			await utils.table.getTableData.invalidate({ viewId, limit: 100 });
 			await utils.table.getTableData.refetch({ viewId, limit: 100 });
-
     },
   });
 

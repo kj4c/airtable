@@ -78,7 +78,8 @@ export default function BaseDashboard() {
   useEffect(() => {
     if (viewsData && viewsData.length > 0) {
       setViews(viewsData.map(({ id, name }) => ({ id, name })));
-      setSelectedViewId(viewsData[0]?.id ?? null);
+
+      setSelectedViewId((prev) => prev ?? viewsData?.[0]?.id ?? null);
     } else {
       setViews([]);
       setSelectedViewId(null);

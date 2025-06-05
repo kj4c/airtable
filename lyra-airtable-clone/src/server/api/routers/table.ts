@@ -235,6 +235,10 @@ export const tableRouter = createTRPCRouter({
         ...(cursor ? [gt(rows.order, cursor)] : []),
       ];
 
+      const sortOrder = sorts
+      .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
+      .map((s) => ({ columnId: s.columnId, direction: s.direction }));
+
       // build sort conditions
       const sortConditions =
         sorts.length > 0
@@ -271,6 +275,8 @@ export const tableRouter = createTRPCRouter({
         )
         .orderBy(...sortConditions)
         .limit(limit);
+
+      console.log("Filtered Rows:", filteredRows);
 
       const rowIds = filteredRows.map((r) => r.id);
       const cellsForTable = rowIds.length
