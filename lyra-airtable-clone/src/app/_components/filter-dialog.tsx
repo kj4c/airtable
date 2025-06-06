@@ -118,12 +118,15 @@ return (
                   <input
                     type="text"
                     value={filter.value ?? ""}
-                    onChange={(e) =>
-                      updateFilter.mutate({
-                        filterId: filter.id,
-                        value: e.target.value,
-                      })
-                    }
+										onBlur={(e) => {
+											const newValue = e.target.value.trim();
+											if (newValue !== filter.value) {
+												updateFilter.mutate({
+													filterId: filter.id,
+													value: newValue,
+												});
+											}
+										}}
                     placeholder="Enter a value"
                     className="flex-1 border px-2 py-1 text-sm"
                   />
