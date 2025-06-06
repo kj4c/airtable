@@ -11,7 +11,8 @@ import {
   ChevronDown,
   Users,
 } from "lucide-react";
-import SortDialog from "~/components/ui/sort-dialog";
+import SortDialog from "~/app/_components/sort-dialog";
+import FilterDialog from "./filter-dialog";
 
 type Props = {
   tableId: string;
@@ -44,11 +45,8 @@ const TableToolbar = ({ tableId, viewId }: Props) => {
       </button>
 
       {/* Filter */}
-      <button className="flex items-center space-x-1 rounded px-2 py-1 hover:bg-gray-100">
-        <Filter className="h-4 w-4" />
-        <span>Filter</span>
-      </button>
-
+      <FilterDialog tableId={tableId} viewId={viewId} />
+      
       {/* Group */}
       <button className="flex items-center space-x-1 rounded px-2 py-1 hover:bg-gray-100">
         <Rows className="h-4 w-4" />

@@ -197,7 +197,7 @@ export const tableRouter = createTRPCRouter({
       }),
     )
     .query(async ({ input }) => {
-      const { viewId, limit, cursor } = input;
+      const { viewId, limit, cursor = 0 } = input;
 
       const view = await db.query.views.findFirst({
         where: (views, { eq }) => eq(views.id, viewId),
@@ -232,12 +232,7 @@ export const tableRouter = createTRPCRouter({
       // Build base where conditions
       const baseConditions = [
         eq(rows.tableId, tableId),
-        ...(cursor ? [gt(rows.order, cursor)] : []),
       ];
-
-      const sortOrder = sorts
-      .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
-      .map((s) => ({ columnId: s.columnId, direction: s.direction }));
 
       // build sort conditions
       const sortConditions =
@@ -247,12 +242,12 @@ export const tableRouter = createTRPCRouter({
               .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
               .map((s) => {
                 const cellValueSql = sql`(
-            SELECT ${cells.value} 
-            FROM ${cells} 
-            WHERE ${cells.rowId} = ${rows.id} 
-              AND ${cells.columnId} = ${s.columnId}
-            LIMIT 1
-          )`;
+                  SELECT ${cells.value} 
+                  FROM ${cells} 
+                  WHERE ${cells.rowId} = ${rows.id} 
+                    AND ${cells.columnId} = ${s.columnId}
+                  LIMIT 1
+                )`;
                 return s.direction === "asc"
                   ? asc(cellValueSql)
                   : desc(cellValueSql);
@@ -274,6 +269,7 @@ export const tableRouter = createTRPCRouter({
           ),
         )
         .orderBy(...sortConditions)
+        .offset(cursor)
         .limit(limit);
 
       console.log("Filtered Rows:", filteredRows);
@@ -299,13 +295,15 @@ export const tableRouter = createTRPCRouter({
 
       const columnDefs = generateColumns(visibleColumns);
       const rowData = generateRows(filteredRows, visibleColumns, cellsForTable);
-      const lastRow = filteredRows[filteredRows.length - 1];
       const totalRowCount = result[0]?.count ?? 0;
+
+      const nextCursor = cursor + filteredRows.length;
+      const hasMore = nextCursor < totalRowCount;
 
       return {
         data: rowData,
         columns: columnDefs,
-        nextCursor: lastRow?.order ?? null,
+        nextCursor: hasMore ? nextCursor : null,
         meta: {
           totalRowCount,
         },
@@ -338,7 +336,7 @@ export const tableRouter = createTRPCRouter({
           : Math.max(...existingRows.map((r) => r.order ?? 0)) + 1;
 
       // need to batch the rows to avoid hitting the max query size
-      const totalRows = 1000;
+      const totalRows = 10000;
       const batchSize = 500;
 
       for (

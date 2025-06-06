@@ -13,7 +13,7 @@ export const appRouter = createTRPCRouter({
   base: baseRouter,
   table: tableRouter,
   sorts: sortRouter,
-  filter: filterRouter,
+  filters: filterRouter,
 });
 
 // export type definition of API

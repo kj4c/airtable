@@ -5,7 +5,7 @@ import type { filterType } from "types";
 import { z } from "zod";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import { db } from "~/server/db";
-import { bases, tables, viewFilters } from "~/server/db/schema";
+import { bases, columns, tables, viewFilters } from "~/server/db/schema";
 
 export function buildOperatorCondition(
   column: Column<any>,
@@ -60,4 +60,46 @@ export const filterRouter = createTRPCRouter({
 
       return newFilter[0];
     }),
+
+  getFilters: protectedProcedure
+    .input(
+      z.object({
+        viewId: z.string(),
+      }),
+    )
+    .query(async ({ input }) => {
+      const { viewId } = input;
+    
+      const filters = await db
+        .select({
+          id: viewFilters.id,
+          viewId: viewFilters.viewId,
+          columnId: viewFilters.columnId,
+          operator: viewFilters.operator,
+          value: viewFilters.value,
+          columnName: columns.name,
+        })
+        .from(viewFilters)
+        .innerJoin(columns, eq(viewFilters.columnId, columns.id))
+        .where(eq(viewFilters.viewId, viewId));
+
+      return filters;
+    }),
+
+  updateFilter: protectedProcedure
+    .input(
+      z.object({
+        filterId: z.string(),
+        columnId: z.string().optional(),
+        operator: z.string().optional(),
+        value: z.string().optional(),
+      }),
+    )
+    .mutation(async ({ input }) => {
+      const { filterId, ...updates} = input;
+
+      await db.update(viewFilters).set(updates).where(eq(viewFilters.id, filterId));
+      
+    }
+  ),
 });

@@ -75,16 +75,21 @@ export default function BaseDashboard() {
     { enabled: !!selectedTableId },
   );
 
+  const handleTableChange = (tableId: string) => {
+    setSelectedTableId(tableId);
+    // the first one
+    console.log("Selected table ID:", tableId);
+  }
+
   useEffect(() => {
     if (viewsData && viewsData.length > 0) {
       setViews(viewsData.map(({ id, name }) => ({ id, name })));
-
-      setSelectedViewId((prev) => prev ?? viewsData?.[0]?.id ?? null);
+      setSelectedViewId(viewsData[0]?.id ?? null);
     } else {
       setViews([]);
       setSelectedViewId(null);
     }
-  }, [viewsData]);
+  }, [viewsData, selectedTableId]);
 
   useEffect(() => {
     const firstTable = baseData?.[0];
@@ -101,7 +106,8 @@ export default function BaseDashboard() {
             {baseData?.map((t) => (
               <button
                 key={t.id}
-                onClick={() => setSelectedTableId(t.id)}
+                onClick={ () => handleTableChange(t.id)}
+                disabled={selectedTableId === t.id}
                 className={`h-8 cursor-pointer rounded-t-xs bg-green-800 px-4 py-1 text-xs ${
                   selectedTableId === t.id
                     ? "rounded-b-none border-b-0 bg-white text-black"
