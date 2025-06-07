@@ -31,7 +31,6 @@ export function EditableCell({
         limit: 100,
       });
 
-      console.log("Previous cache:", previous);
 
       utils.table.getTableData.setInfiniteData(
         { viewId, limit: 100 },

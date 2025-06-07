@@ -14,7 +14,7 @@ import {
 } from "~/server/db/schema";
 import { generateColumns, generateRows } from "./data";
 import { faker } from "@faker-js/faker";
-import { and, desc, eq, gt, or } from "drizzle-orm";
+import { and, desc, eq, exists, gt, or } from "drizzle-orm";
 import { sql, asc } from "drizzle-orm";
 import { buildOperatorCondition } from "./filter";
 
@@ -219,15 +219,21 @@ export const tableRouter = createTRPCRouter({
 
       const visibleColumnIds = visibleColumns.map((col) => col.id);
 
-      const filterConditions =
-        filters.length > 0
-          ? filters.map((f) =>
+      const filterConditions = filters.map((f) => {
+        return exists(
+          db
+            .select({ id: cells.id })
+            .from(cells)
+            .where(
               and(
+                eq(cells.rowId, rows.id),
                 eq(cells.columnId, f.columnId),
                 buildOperatorCondition(cells.value, f.operator, f.value),
-              ),
+              )
             )
-          : [];
+            .limit(1)
+        );
+      });
 
       // Build base where conditions
       const baseConditions = [
@@ -265,7 +271,7 @@ export const tableRouter = createTRPCRouter({
         .where(
           and(
             ...baseConditions,
-            ...(filterConditions.length > 0 ? [or(...filterConditions)] : []),
+            ...filterConditions,
           ),
         )
         .orderBy(...sortConditions)
@@ -286,18 +292,11 @@ export const tableRouter = createTRPCRouter({
           })
         : [];
 
-      const result = await db
-        .select({
-          count: sql<number>`count(*)`,
-        })
-        .from(rows)
-        .where(eq(rows.tableId, tableId));
 
+      const totalRowCount = filteredRows.length;
       const columnDefs = generateColumns(visibleColumns);
       const rowData = generateRows(filteredRows, visibleColumns, cellsForTable);
-      const totalRowCount = result[0]?.count ?? 0;
-
-      const nextCursor = cursor + filteredRows.length;
+      const nextCursor = cursor + totalRowCount;
       const hasMore = nextCursor < totalRowCount;
 
       return {

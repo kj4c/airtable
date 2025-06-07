@@ -45,6 +45,9 @@ export function DataTable({ tableId, viewId }: DataTableProps) {
   const [type, setType] = React.useState<"text" | "number">("text");
   const utils = api.useUtils();
   const tableContainerRef = React.useRef<HTMLDivElement>(null);
+  const { data: filters = [] } = api.filters.getFilters.useQuery({ viewId });
+  const { data: sorts = [] } = api.sorts.getSorts.useQuery({ viewId });
+
 
   const { data, fetchNextPage, hasNextPage, isFetching } =
     api.table.getTableData.useInfiniteQuery(
@@ -62,7 +65,6 @@ export function DataTable({ tableId, viewId }: DataTableProps) {
     return data?.pages?.[0]?.columns ?? [];
   }, [data?.pages?.[0]?.columns, viewId]);
 
-  const { data: sorts = [] } = api.sorts.getSorts.useQuery({ viewId });
 
   const flatData = useMemo(() => {
     const seenIds = new Set<string>();
@@ -84,7 +86,6 @@ export function DataTable({ tableId, viewId }: DataTableProps) {
   const totalDBRowCount = data?.pages?.[0]?.meta?.totalRowCount ?? 0;
   const totalFetched = flatData.length;
 
-  // Stable table instance that resets when view changes
   const table = useReactTable({
     data: flatData,
     columns,
@@ -92,10 +93,12 @@ export function DataTable({ tableId, viewId }: DataTableProps) {
     manualSorting: true,
   });
 
+
   const tableResetKey = useMemo(() => {
     const sortKey = sorts.map((s) => `${s.columnId}:${s.direction}`).join("|");
     return `table-${viewId}-${sortKey}`;
   }, [viewId, sorts]);
+  
 
   const rowVirtualizer = useVirtualizer({
     count: flatData.length,
@@ -110,6 +113,12 @@ export function DataTable({ tableId, viewId }: DataTableProps) {
 
   const fetchMoreOnBottomReached = useCallback(
     async (containerRefElement?: HTMLDivElement | null) => {
+      if (
+        !containerRefElement ||
+        !hasNextPage ||
+        isFetching
+      ) return;
+      
       if (containerRefElement) {
         const { scrollHeight, scrollTop, clientHeight } = containerRefElement;
         if (

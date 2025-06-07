@@ -64,7 +64,7 @@ return (
         </button>
       </PopoverTrigger>
 
-      <PopoverContent className="w-[300px]">
+      <PopoverContent className="w-[500px]">
         {hasFilters ? (
           <>
             <div className="text-xs text-gray-500 mb-2">In this view, show records</div>
@@ -117,7 +117,7 @@ return (
                   {/* Value input */}
                   <input
                     type="text"
-                    value={filter.value ?? ""}
+                    defaultValue={filter.value ?? ""}
 										onBlur={(e) => {
 											const newValue = e.target.value.trim();
 											if (newValue !== filter.value) {
