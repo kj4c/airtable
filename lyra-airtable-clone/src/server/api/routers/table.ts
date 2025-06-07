@@ -95,7 +95,11 @@ export const tableRouter = createTRPCRouter({
           ? 0
           : Math.max(...existing.map((r) => r.order ?? 0)) + 1;
 
-      const newRow = await db
+      const tableColumns = await db.query.columns.findMany({
+        where: (c, { eq }) => eq(c.tableId, tableId),
+      });
+
+      const [newRow] = await db
         .insert(rows)
         .values({
           tableId: tableId,
@@ -103,7 +107,21 @@ export const tableRouter = createTRPCRouter({
         })
         .returning();
 
-      return newRow[0];
+      if (!newRow) {
+        throw new Error("Failed to create new row");
+      }
+      
+      if (tableColumns.length > 0) {
+        await db.insert(cells).values(
+          tableColumns.map((col) => ({
+            rowId: newRow.id,
+            columnId: col.id,
+            value: "", // no val
+          })),
+        );
+      }
+
+      return newRow;
     }),
 
   insertCell: protectedProcedure
@@ -219,7 +237,12 @@ export const tableRouter = createTRPCRouter({
 
       const visibleColumnIds = visibleColumns.map((col) => col.id);
 
-      const filterConditions = filters.map((f) => {
+      const filterConditions = filters
+      .filter((f) => {
+        const isValueRequired = f.operator !== "is empty" && f.operator !== "is not empty";
+        return !(isValueRequired && (!f.value || f.value.trim() === ""));
+      })
+      .map((f) => {
         return exists(
           db
             .select({ id: cells.id })
@@ -335,7 +358,7 @@ export const tableRouter = createTRPCRouter({
           : Math.max(...existingRows.map((r) => r.order ?? 0)) + 1;
 
       // need to batch the rows to avoid hitting the max query size
-      const totalRows = 10000;
+      const totalRows = 1000;
       const batchSize = 500;
 
       for (

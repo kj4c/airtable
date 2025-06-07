@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  type ColumnDef,
   flexRender,
   getCoreRowModel,
   useReactTable,
@@ -148,6 +147,7 @@ export function DataTable({ tableId, viewId }: DataTableProps) {
         viewId: viewId,
         limit: 100,
       });
+      await utils.table.getColumns.invalidate();
     },
   });
 
@@ -246,6 +246,11 @@ export function DataTable({ tableId, viewId }: DataTableProps) {
                       className="cursor-pointer"
                       onChange={(e) => {
                         setColumnName(e.target.value);
+                      }}
+                      onKeyDown={async (e) => {
+                        if (e.key === "Enter") {
+                          handleCreateColumn();
+                        }
                       }}
                       value={columnName}
                     />

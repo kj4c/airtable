@@ -1,6 +1,6 @@
 // helper function to convert columns to TanStack Columns
 import { type ColumnDef } from "@tanstack/react-table";
-import type { RowData } from "types.tsx";
+import type { ColumnMeta, RowData } from "types.tsx";
 
 type DBColumn = {
   order: number;
@@ -23,7 +23,11 @@ type DBCell = {
   columnId: string;
 };
 
-export function generateColumns(columns: DBColumn[]): ColumnDef<RowData>[] {
+type ColumnWithMeta = ColumnDef<RowData> & {
+  meta: ColumnMeta;
+};
+
+export function generateColumns(columns: DBColumn[]): ColumnWithMeta[] {
   return columns
     .filter((col) => col.name !== "order") // filter out the order column
     .map((col) => ({
@@ -32,6 +36,9 @@ export function generateColumns(columns: DBColumn[]): ColumnDef<RowData>[] {
 
       // what is displayed in the header
       header: col.name,
+      meta: {
+        type: col.type === "number" ? "number" : "string",
+      },
 
       // type of the cell
       cell: ({ getValue }) => {
@@ -40,7 +47,6 @@ export function generateColumns(columns: DBColumn[]): ColumnDef<RowData>[] {
           const num = Number(value);
           return isNaN(num) ? "" : num;
         }
-
         return value ?? "";
       },
     }));

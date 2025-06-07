@@ -90,7 +90,7 @@ export default function ViewSidebar({
 
       <div className="h-[80%] overflow-y-auto">
         <button
-          className="flex w-full items-center rounded px-2 py-1 font-medium hover:bg-gray-100"
+          className="flex w-full items-center rounded px-2 py-1 font-medium hover:bg-gray-100 cursor-pointer"
           onClick={() => setCreateOpen(!createOpen)}
         >
           <span className="flex-1 text-left">Create...</span>

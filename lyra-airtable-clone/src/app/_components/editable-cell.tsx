@@ -2,13 +2,15 @@
 import { api } from "~/trpc/react";
 import { flexRender, type Cell, type ColumnDef } from "@tanstack/react-table";
 import React, { useEffect, useState } from "react";
-import type { RowData } from "types.tsx";
+import type { ColumnMeta, RowData } from "types.tsx";
 
 type EditableCellProps<TData> = {
   cell: Cell<TData, unknown>;
   tableId: string;
   viewId: string;
 };
+
+
 
 export function EditableCell({
   cell,
@@ -83,6 +85,9 @@ export function EditableCell({
     typeof currentValue === "string"
       ? currentValue
       : currentValue?.toString() ?? "";
+    
+  const meta = cell.column.columnDef.meta as ColumnMeta | undefined;
+  const columnType = meta?.type ?? "string";
 
   useEffect(() => {
     if (isEditing) setEditValue(stringValue);
@@ -117,6 +122,8 @@ export function EditableCell({
         <input
           className={`h-full w-full border-0 ring-0 outline-none focus:ring-0 ${isEditing ? "text-blue-500" : "text-gray-900"} `}
           value={editValue}
+          type={columnType === "number" ? "number" : "text"}
+          inputMode={columnType === "number" ? "numeric" : "text"}
           autoFocus
           onChange={(e) => setEditValue(e.target.value)}
           onBlur={handleSave}

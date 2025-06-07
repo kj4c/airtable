@@ -2,7 +2,7 @@
 
 import { eq, gt, ilike, isNull, lt, ne, not, SQL, Column } from "drizzle-orm";
 import type { filterType } from "types";
-import { z } from "zod";
+import { never, z } from "zod";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import { db } from "~/server/db";
 import { bases, columns, tables, viewFilters } from "~/server/db/schema";
@@ -23,12 +23,14 @@ export function buildOperatorCondition(
       return lt(column, value);
     case "contains":
       return ilike(column, `%${value}%`);
-    case "not_contains":
+    case "does not contain":
       return not(ilike(column, `%${value}%`));
-    case "is_empty":
-      return isNull(column);
-    case "is_not_empty":
-      return not(isNull(column));
+    case "is":
+      return eq(column, value);
+    case "is empty":
+      return eq(column, "");
+    case "is not empty":
+      return ne(column, "");
     default:
       throw new Error(`Unknown operator: ${operator}`);
   }
@@ -41,7 +43,7 @@ export const filterRouter = createTRPCRouter({
         viewId: z.string(),
         columnId: z.string(),
         operator: z.string(),
-        value: z.string().optional(),
+        value: z.string().nullable().optional(),
       }),
     )
     .mutation(async ({ input }) => {
@@ -78,6 +80,7 @@ export const filterRouter = createTRPCRouter({
           operator: viewFilters.operator,
           value: viewFilters.value,
           columnName: columns.name,
+          columnType: columns.type,
         })
         .from(viewFilters)
         .innerJoin(columns, eq(viewFilters.columnId, columns.id))
@@ -92,14 +95,33 @@ export const filterRouter = createTRPCRouter({
         filterId: z.string(),
         columnId: z.string().optional(),
         operator: z.string().optional(),
-        value: z.string().optional(),
+        value: z.string().nullable().optional(),
       }),
     )
     .mutation(async ({ input }) => {
       const { filterId, ...updates} = input;
+      if (updates.operator === "is empty" || updates.operator === "is not empty") {
+        updates.value = null;
+      }
 
+      if (updates.value === "") {
+        delete updates.value;
+      }
       await db.update(viewFilters).set(updates).where(eq(viewFilters.id, filterId));
       
+    }
+  ),
+
+  deleteFilter: protectedProcedure
+    .input(
+      z.object({
+        filterId: z.string(),
+      }),
+    )
+    .mutation(async ({ input }) => {
+      const { filterId } = input;
+
+      await db.delete(viewFilters).where(eq(viewFilters.id, filterId));
     }
   ),
 });

@@ -4,7 +4,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "~/components/ui/dropdown-menu";
-import { Filter, Plus, Search } from "lucide-react";
+import { Filter, Plus, Search, Trash, Trash2 } from "lucide-react";
 import {
   Popover,
   PopoverContent,
@@ -27,6 +27,9 @@ export default function FilterDialog({ tableId, viewId }: Props) {
   );
   const utils = api.useUtils();
 
+  const stringFilters = ["contains", "does not contain", "is", "is not empty", "is empty"];
+  const numFilters = [">", "<"];
+
   const createFilter = api.filters.createFilter.useMutation({
     onSuccess: async () => {
       await utils.filters.getFilters.invalidate({ viewId });
@@ -35,6 +38,13 @@ export default function FilterDialog({ tableId, viewId }: Props) {
   });
 
   const updateFilter = api.filters.updateFilter.useMutation({
+    onSuccess: async () => {
+      await utils.filters.getFilters.invalidate({ viewId });
+      await utils.table.getTableData.invalidate({ viewId, limit: 100 });
+    },
+  });
+
+  const deleteFilter = api.filters.deleteFilter.useMutation({
     onSuccess: async () => {
       await utils.filters.getFilters.invalidate({ viewId });
       await utils.table.getTableData.invalidate({ viewId, limit: 100 });
@@ -70,9 +80,9 @@ return (
             <div className="text-xs text-gray-500 mb-2">In this view, show records</div>
             <div className="flex flex-col space-y-2">
               {fetchFilters.data.map((filter) => (
-                <div key={filter.id} className="flex items-center space-x-2">
+                <div key={filter.id} className="flex items-center">
                   <DropdownMenu>
-                    <DropdownMenuTrigger className="w-[150px] text-left border px-2 py-1 text-sm bg-white">
+                    <DropdownMenuTrigger className="w-[150px] cursor-pointer text-left border px-2 py-1 text-sm bg-white">
                       {filter.columnName}
                     </DropdownMenuTrigger>
                     <DropdownMenuContent>
@@ -91,14 +101,12 @@ return (
                       ))}
                     </DropdownMenuContent>
                   </DropdownMenu>
-
-                  {/* Operator selector */}
                   <DropdownMenu>
-                    <DropdownMenuTrigger className="w-[60px] text-left border px-2 py-1 text-sm bg-white">
+                    <DropdownMenuTrigger className="w-[200px] cursor-pointer text-left border px-2 py-1 text-sm bg-white">
                       {filter.operator || "="}
                     </DropdownMenuTrigger>
                     <DropdownMenuContent>
-                      {["=", "contains", ">", "<"].map((op) => (
+                      {(filter.columnType === "number" ? numFilters : stringFilters).map((op) => (
                         <DropdownMenuItem
                           key={op}
                           onClick={() =>
@@ -107,6 +115,7 @@ return (
                               operator: op,
                             })
                           }
+                          className="cursor-pointer"
                         >
                           {op}
                         </DropdownMenuItem>
@@ -114,10 +123,13 @@ return (
                     </DropdownMenuContent>
                   </DropdownMenu>
 
-                  {/* Value input */}
                   <input
                     type="text"
-                    defaultValue={filter.value ?? ""}
+                    defaultValue={
+                      filter.operator === "is empty" || filter.operator === "is not empty"
+                        ? ""
+                        : filter.value ?? ""
+                    }
 										onBlur={(e) => {
 											const newValue = e.target.value.trim();
 											if (newValue !== filter.value) {
@@ -127,36 +139,46 @@ return (
 												});
 											}
 										}}
-                    placeholder="Enter a value"
+                    disabled={filter.operator === "is empty" || filter.operator === "is not empty"}
+                    placeholder={filter.operator === "is empty" || filter.operator === "is not empty" ? "" : "Enter a value"}
                     className="flex-1 border px-2 py-1 text-sm"
                   />
+                  <button
+                    onClick={() => {
+                      deleteFilter.mutate({ filterId: filter.id });
+                    }}
+                  >
+                    <Trash2 className="border px-2 py-1 w-8 h-[29.65px] text-gray-600 cursor-pointer"/>
+                  </button>
                 </div>
               ))}
 
-              {/* Add condition button */}
-              <button
-                className="text-gray-600 text-xs font-medium hover:text-gray-800"
-                onClick={() => {
-                  const firstColumn = fetchColumns.data?.[0];
-                  if (!firstColumn) return;
+              <div className="flex gap-3">
+                <button
+                  className="text-gray-600 text-xs font-medium hover:text-gray-800 cursor-pointer"
+                  onClick={() => {
+                    const firstColumn = fetchColumns.data?.[0];
+                    if (!firstColumn) return;
 
-                  const isString = firstColumn.type === "text";
-                  const isNumber = firstColumn.type === "number";
+                    const isString = firstColumn.type === "text";
+                    const isNumber = firstColumn.type === "number";
 
-                  createFilter.mutate({
-                    viewId,
-                    columnId: firstColumn.id,
-                    operator: isString ? "contains" : isNumber ? "=" : "",
-                    value: "",
-                  });
-                }}
-              >
-                + Add condition
-              </button>
+                    createFilter.mutate({
+                      viewId,
+                      columnId: firstColumn.id,
+                      operator: isString ? "contains" : isNumber ? "=" : "",
+                      value: "",
+                    });
+                  }}
+                >
+                  + Add condition
+                </button>
 
-              <button className="text-gray-600 text-xs font-medium hover:text-gray-800">
-                + Add condition group ⓘ
-              </button>
+                <button className="text-gray-600 text-xs font-medium hover:text-gray-800">
+                  + Add condition group ⓘ
+                </button>
+              </div>
+            
             </div>
           </>
         ) : (
