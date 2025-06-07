@@ -8,7 +8,7 @@ import { db } from "~/server/db";
 import { bases, columns, tables, viewFilters } from "~/server/db/schema";
 
 export function buildOperatorCondition(
-  column: Column<any>,
+  column: SQL,
   operator: string,
   value: string | null,
 ) {
@@ -104,9 +104,11 @@ export const filterRouter = createTRPCRouter({
         updates.value = null;
       }
 
-      if (updates.value === "") {
-        delete updates.value;
+      if (Object.keys(updates).length === 0) {
+        console.log("No updates provided for filter, skipping update.");
+        return;
       }
+
       await db.update(viewFilters).set(updates).where(eq(viewFilters.id, filterId));
       
     }

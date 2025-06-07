@@ -132,10 +132,12 @@ return (
                     }
 										onBlur={(e) => {
 											const newValue = e.target.value.trim();
-											if (newValue !== filter.value) {
+                      const currentValue = filter.value ?? "";
+											if (newValue !== currentValue) {
 												updateFilter.mutate({
 													filterId: filter.id,
 													value: newValue,
+                          operator: filter.operator,
 												});
 											}
 										}}

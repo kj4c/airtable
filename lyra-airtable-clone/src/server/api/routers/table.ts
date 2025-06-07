@@ -243,6 +243,13 @@ export const tableRouter = createTRPCRouter({
         return !(isValueRequired && (!f.value || f.value.trim() === ""));
       })
       .map((f) => {
+        const columnMeta = visibleColumns.find((col) => col.id === f.columnId);
+        const isNumeric = columnMeta?.type === "number";
+
+        const cellValue = isNumeric
+          ? sql`CAST(${cells.value} AS INTEGER)`
+          : sql`${cells.value}`;
+
         return exists(
           db
             .select({ id: cells.id })
@@ -251,7 +258,7 @@ export const tableRouter = createTRPCRouter({
               and(
                 eq(cells.rowId, rows.id),
                 eq(cells.columnId, f.columnId),
-                buildOperatorCondition(cells.value, f.operator, f.value),
+                buildOperatorCondition(cellValue, f.operator, f.value),
               )
             )
             .limit(1)
@@ -270,7 +277,18 @@ export const tableRouter = createTRPCRouter({
               // order it based on the order of the sorts
               .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
               .map((s) => {
-                const cellValueSql = sql`(
+                const col = visibleColumns.find((c) => c.id === s.columnId);
+                const isNumeric = col?.type === "number";
+
+                const cellValueSql = isNumeric
+                ? sql`(
+                  SELECT CAST(${cells.value} AS INTEGER)
+                  FROM ${cells}
+                  WHERE ${cells.rowId} = ${rows.id}
+                    AND ${cells.columnId} = ${s.columnId}
+                  LIMIT 1
+                )`
+                : sql`(
                   SELECT ${cells.value} 
                   FROM ${cells} 
                   WHERE ${cells.rowId} = ${rows.id} 
@@ -314,7 +332,6 @@ export const tableRouter = createTRPCRouter({
               ),
           })
         : [];
-
 
       const totalRowCount = filteredRows.length;
       const columnDefs = generateColumns(visibleColumns);
