@@ -28,7 +28,7 @@ export default function BaseDashboard() {
 
   // add new table
   const createTable = api.base.createTable.useMutation({
-    onSuccess: async (newTable) => {
+    onSuccess: async () => {
       await utils.base.getTables.invalidate();
     },
   });
@@ -59,8 +59,6 @@ export default function BaseDashboard() {
   // fetch tables
   const {
     data: baseData,
-    error,
-    isLoading,
   } = api.base.getTables.useQuery(
     {
       baseId: baseId,

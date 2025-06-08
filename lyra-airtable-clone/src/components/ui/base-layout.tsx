@@ -1,9 +1,8 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
 import { AuthButton } from "~/components/ui/auth-button";
-import ViewSidebar from "~/app/_components/table-sidebar";
+import Image from "next/image";
 
 export default function BaseLayout({
   children,
@@ -12,17 +11,17 @@ export default function BaseLayout({
   children: React.ReactNode;
   baseName: string;
 }) {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
     <div className="flex h-screen flex-col">
       <header className="sticky top-0 flex min-h-[56px] items-center justify-between bg-green-700 px-1">
         <div className="flex min-w-[60px] items-center">
           <Link href="/home">
-            <img
+            <Image
               className="mr-4 ml-5 h-[22px]"
               src="/airtable-transparent.png"
-            ></img>
+              alt="Airtable Logo"
+            />
           </Link>
           <h1 className="text-lg font-semibold text-white">{baseName}</h1>
         </div>

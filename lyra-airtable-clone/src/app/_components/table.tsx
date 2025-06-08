@@ -5,7 +5,7 @@ import {
   getCoreRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import React, { useEffect, useMemo, useCallback } from "react";
+import React, { useMemo, useCallback } from "react";
 import { Button } from "../../components/ui/button";
 import { api } from "~/trpc/react";
 import {
@@ -44,7 +44,6 @@ export function DataTable({ tableId, viewId }: DataTableProps) {
   const [type, setType] = React.useState<"text" | "number">("text");
   const utils = api.useUtils();
   const tableContainerRef = React.useRef<HTMLDivElement>(null);
-  const { data: filters = [] } = api.filters.getFilters.useQuery({ viewId });
   const { data: sorts = [] } = api.sorts.getSorts.useQuery({ viewId });
 
 
@@ -60,16 +59,17 @@ export function DataTable({ tableId, viewId }: DataTableProps) {
     );
 
   // get all columns memoised
+  const firstPageColumns = data?.pages?.[0]?.columns;
+
   const columns = useMemo(() => {
-    return data?.pages?.[0]?.columns ?? [];
-  }, [data?.pages?.[0]?.columns, viewId]);
+    return firstPageColumns ?? [];
+  }, [firstPageColumns, viewId]);
 
 
   const flatData = useMemo(() => {
     const seenIds = new Set<string>();
     const deduplicatedData: RowData[] = [];
 
-    console.log("NEW FLAT");
     for (const page of data?.pages ?? []) {
       for (const row of page.data) {
         if (!seenIds.has(row.id)) {
@@ -169,7 +169,7 @@ export function DataTable({ tableId, viewId }: DataTableProps) {
     },
   });
 
-  const handleCreateColumn = useCallback(() => {
+  const handleCreateColumn = useCallback(async () => {
     if (columnName.trim()) {
       createColumn.mutate({
         name: columnName,
@@ -180,7 +180,7 @@ export function DataTable({ tableId, viewId }: DataTableProps) {
       setType("text");
       setOpen(false);
     }
-    utils.table.getColumns.invalidate();
+    await utils.table.getColumns.invalidate();
   }, [columnName, type, tableId, createColumn]);
 
   // Handle row creation
@@ -249,7 +249,7 @@ export function DataTable({ tableId, viewId }: DataTableProps) {
                       }}
                       onKeyDown={async (e) => {
                         if (e.key === "Enter") {
-                          handleCreateColumn();
+                          await handleCreateColumn();
                         }
                       }}
                       value={columnName}

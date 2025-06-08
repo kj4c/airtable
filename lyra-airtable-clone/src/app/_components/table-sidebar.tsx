@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import {
   Plus,
   TableCellsSplit,
@@ -10,7 +10,6 @@ import {
   ListChecks,
   RulerDimensionLine,
   AlignHorizontalJustifyEnd,
-  Folder,
   FileText,
   Search,
   Check,
@@ -154,7 +153,7 @@ export default function ViewSidebar({
               <div
                 key={view.name}
                 className="flex cursor-pointer items-center justify-between rounded px-2 py-1 hover:bg-gray-100"
-                onClick={view.onClick ? view.onClick : undefined}
+                onClick={view.onClick ?? undefined}
               >
                 <div className="flex cursor-pointer items-center">
                   {view.icon}

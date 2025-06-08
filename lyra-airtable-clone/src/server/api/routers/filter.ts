@@ -1,11 +1,10 @@
 // src/server/api/routers/base.ts
 
-import { eq, gt, ilike, isNull, lt, ne, not, SQL, Column } from "drizzle-orm";
-import type { filterType } from "types";
-import { never, z } from "zod";
+import { eq, gt, ilike, lt, ne, not, type SQL } from "drizzle-orm";
+import { z } from "zod";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import { db } from "~/server/db";
-import { bases, columns, tables, viewFilters } from "~/server/db/schema";
+import { columns, viewFilters } from "~/server/db/schema";
 
 export function buildOperatorCondition(
   column: SQL,

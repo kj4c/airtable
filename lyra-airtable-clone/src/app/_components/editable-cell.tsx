@@ -1,6 +1,6 @@
 "use client";
 import { api } from "~/trpc/react";
-import { flexRender, type Cell, type ColumnDef } from "@tanstack/react-table";
+import { flexRender, type Cell } from "@tanstack/react-table";
 import React, { useEffect, useState } from "react";
 import type { ColumnMeta, RowData } from "types.tsx";
 
@@ -14,7 +14,6 @@ type EditableCellProps<TData> = {
 
 export function EditableCell({
   cell,
-  tableId,
   viewId,
 }: EditableCellProps<RowData>) {
   const [isEditing, setIsEditing] = useState(false);

@@ -5,6 +5,7 @@ import { Button } from "~/components/ui/button";
 import { Menu } from "lucide-react";
 import Link from "next/link";
 import { AuthButton } from "~/components/ui/auth-button";
+import Image from "next/image";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -22,7 +23,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             <Menu className="!h-5 !w-5 text-gray-500 transition-colors group-hover:text-black" />
           </Button>
           <Link href="/">
-            <img className="h-16" src="logo-side.png"></img>
+            <Image className="h-16" src="logo-side.png" alt="Logo" />
           </Link>
         </div>
         <AuthButton />

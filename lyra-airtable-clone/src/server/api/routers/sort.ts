@@ -4,14 +4,10 @@ import { z } from "zod";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import { db } from "~/server/db";
 import {
-  bases,
   columns,
-  tables,
-  viewFilters,
   viewSorts,
 } from "~/server/db/schema";
 import { eq, asc } from "drizzle-orm";
-import { dir } from "console";
 
 export const sortRouter = createTRPCRouter({
   createSort: protectedProcedure

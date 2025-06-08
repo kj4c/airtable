@@ -8,13 +8,12 @@ import {
   columns,
   rows,
   viewFilters,
-  viewHiddenColumns,
   views,
   viewSorts,
 } from "~/server/db/schema";
 import { generateColumns, generateRows } from "./data";
 import { faker } from "@faker-js/faker";
-import { and, desc, eq, exists, gt, or } from "drizzle-orm";
+import { and, desc, eq, exists} from "drizzle-orm";
 import { sql, asc } from "drizzle-orm";
 import { buildOperatorCondition } from "./filter";
 
@@ -48,7 +47,7 @@ export const tableRouter = createTRPCRouter({
         tableId: z.string(),
       }),
     )
-    .mutation(async ({ input, ctx }) => {
+    .mutation(async ({ input }) => {
       const { name, type, tableId } = input;
 
       const existing = await db.query.columns.findMany({

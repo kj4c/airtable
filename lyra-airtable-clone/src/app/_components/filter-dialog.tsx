@@ -4,7 +4,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "~/components/ui/dropdown-menu";
-import { Filter, Plus, Search, Trash, Trash2 } from "lucide-react";
+import { Filter, Trash2 } from "lucide-react";
 import {
   Popover,
   PopoverContent,

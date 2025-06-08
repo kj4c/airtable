@@ -4,7 +4,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "~/components/ui/dropdown-menu";
-import { Plus, Search, SortAsc, SortDesc } from "lucide-react";
+import { Plus, Search, SortAsc } from "lucide-react";
 import {
   Popover,
   PopoverContent,
