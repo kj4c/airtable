@@ -32,13 +32,14 @@ import { useVirtualizer } from "@tanstack/react-virtual";
 type DataTableProps = {
   tableId: string;
   viewId: string;
+  searchQuery: string;
 };
 
 function capitalizeFirstLetter(str: string) {
   return str.charAt(0).toUpperCase() + str.slice(1);
 }
 
-export function DataTable({ tableId, viewId }: DataTableProps) {
+export function DataTable({ tableId, viewId, searchQuery}: DataTableProps) {
   const [open, setOpen] = React.useState(false);
   const [columnName, setColumnName] = React.useState("");
   const [type, setType] = React.useState<"text" | "number">("text");
@@ -52,6 +53,7 @@ export function DataTable({ tableId, viewId }: DataTableProps) {
       {
         viewId,
         limit: 100,
+        searchQuery,
       },
       {
         getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,

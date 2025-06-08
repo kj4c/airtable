@@ -16,8 +16,10 @@ import Search from "./search";
 type Props = {
   tableId: string;
   viewId: string;
+  searchQuery: string;
+  setSearchQuery: (q: string) => void;
 };
-const TableToolbar = ({ tableId, viewId }: Props) => {
+const TableToolbar = ({ tableId, viewId, searchQuery, setSearchQuery}: Props) => {
   return (
     <div className="flex items-center space-x-4 border-b border-gray-200 bg-white px-3 py-1 text-sm text-gray-700">
       {/* Views Button */}
@@ -72,7 +74,7 @@ const TableToolbar = ({ tableId, viewId }: Props) => {
         <span>Share and sync</span>
       </button>
 
-      <Search />
+      <Search value={searchQuery} onChange={setSearchQuery} />
     </div>
   );
 };

@@ -13,7 +13,7 @@ import {
 } from "~/server/db/schema";
 import { generateColumns, generateRows } from "./data";
 import { faker } from "@faker-js/faker";
-import { and, desc, eq, exists} from "drizzle-orm";
+import { and, desc, eq, exists, or, SQL} from "drizzle-orm";
 import { sql, asc } from "drizzle-orm";
 import { buildOperatorCondition } from "./filter";
 
@@ -211,6 +211,7 @@ export const tableRouter = createTRPCRouter({
         viewId: z.string(),
         limit: z.number(),
         cursor: z.number().optional(),
+        searchQuery: z.string().optional(),
       }),
     )
     .query(async ({ input }) => {
@@ -264,6 +265,42 @@ export const tableRouter = createTRPCRouter({
         );
       });
 
+      const searchConditions: SQL[] = [];
+      if (input.searchQuery?.trim()) {
+        const lowered = input.searchQuery?.toLowerCase();
+        const likeQuery = `%${lowered}%`;
+
+        const searchQueries = visibleColumns.map((col) => {
+          const isNumeric = col.type === "number";
+
+          const comparison = isNumeric
+            ? sql`CAST(${cells.value} AS TEXT) LIKE ${likeQuery}`
+            : sql`LOWER(${cells.value}) LIKE ${likeQuery}`;
+
+          return exists(
+            db
+              .select({ id: cells.id })
+              .from(cells)
+              .where(
+                and(
+                  eq(cells.rowId, rows.id),
+                  eq(cells.columnId, col.id),
+                  comparison
+                )
+              )
+              .limit(1)
+          );
+        });
+
+        const filteredSearchQueries = searchQueries.filter((q): q is SQL => q !== undefined);
+
+        // make em one big or
+        if (filteredSearchQueries.length > 0) {
+          searchConditions.push(
+            or(...filteredSearchQueries)
+          );
+        }
+      }
       // Build base where conditions
       const baseConditions = [
         eq(rows.tableId, tableId),
@@ -312,6 +349,7 @@ export const tableRouter = createTRPCRouter({
           and(
             ...baseConditions,
             ...filterConditions,
+            ...searchConditions,
           ),
         )
         .orderBy(...sortConditions)

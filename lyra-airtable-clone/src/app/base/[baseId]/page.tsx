@@ -10,6 +10,7 @@ import React from "react";
 import { ChevronDown } from "lucide-react";
 import TableToolbar from "~/app/_components/table-toolbar";
 import ViewSidebar from "~/app/_components/table-sidebar";
+import { useDebounce } from "use-debounce";
 
 type viewType = {
   name: string;
@@ -24,6 +25,8 @@ export default function BaseDashboard() {
   const [selectedTableId, setSelectedTableId] = useState<string | null>(null);
   const [views, setViews] = useState<viewType[]>([]);
   const [selectedViewId, setSelectedViewId] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState<string>("");
+  const [debouncedSearchQuery] = useDebounce(searchQuery, 300);
   const utils = api.useUtils();
 
   // add new table
@@ -87,6 +90,7 @@ export default function BaseDashboard() {
       setViews([]);
       setSelectedViewId(null);
     }
+    setSearchQuery("");
   }, [viewsData, selectedTableId]);
 
   useEffect(() => {
@@ -127,7 +131,12 @@ export default function BaseDashboard() {
           </div>
           <div className="border-t-0">
             {selectedTableId && selectedViewId && (
-              <TableToolbar tableId={selectedTableId} viewId={selectedViewId} />
+              <TableToolbar 
+              tableId={selectedTableId}
+              viewId={selectedViewId}
+              searchQuery={searchQuery}
+              setSearchQuery={setSearchQuery}
+              />
             )}
           </div>
         </div>
@@ -144,7 +153,7 @@ export default function BaseDashboard() {
           <div className="flex-1 overflow-hidden">
             {selectedTableId && selectedViewId && (
               <div className="h-screen w-full overflow-auto">
-                <DataTable tableId={selectedTableId} viewId={selectedViewId} />
+                <DataTable tableId={selectedTableId} viewId={selectedViewId} searchQuery={debouncedSearchQuery}/>
               </div>
             )}
           </div>
