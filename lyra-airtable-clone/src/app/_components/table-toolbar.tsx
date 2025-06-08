@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import SortDialog from "~/app/_components/sort-dialog";
 import FilterDialog from "./filter-dialog";
+import Search from "./search";
 
 type Props = {
   tableId: string;
@@ -70,6 +71,8 @@ const TableToolbar = ({ tableId, viewId }: Props) => {
         <Share2 className="h-4 w-4" />
         <span>Share and sync</span>
       </button>
+
+      <Search />
     </div>
   );
 };

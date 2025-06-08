@@ -20,6 +20,8 @@ export default function BaseLayout({
             <Image
               className="mr-4 ml-5 h-[22px]"
               src="/airtable-transparent.png"
+              width={22}
+              height={22}
               alt="Airtable Logo"
             />
           </Link>
