@@ -5,7 +5,6 @@ export type RowData = {
   [key: string]: string | number;
 };
 
-
 export type ColumnMeta = {
   type: "string" | "number";
 };

@@ -39,14 +39,13 @@ function capitalizeFirstLetter(str: string) {
   return str.charAt(0).toUpperCase() + str.slice(1);
 }
 
-export function DataTable({ tableId, viewId, searchQuery}: DataTableProps) {
+export function DataTable({ tableId, viewId, searchQuery }: DataTableProps) {
   const [open, setOpen] = React.useState(false);
   const [columnName, setColumnName] = React.useState("");
   const [type, setType] = React.useState<"text" | "number">("text");
   const utils = api.useUtils();
   const tableContainerRef = React.useRef<HTMLDivElement>(null);
   const { data: sorts = [] } = api.sorts.getSorts.useQuery({ viewId });
-
 
   const { data, fetchNextPage, hasNextPage, isFetching } =
     api.table.getTableData.useInfiniteQuery(
@@ -66,7 +65,6 @@ export function DataTable({ tableId, viewId, searchQuery}: DataTableProps) {
   const columns = useMemo(() => {
     return firstPageColumns ?? [];
   }, [firstPageColumns, viewId]);
-
 
   const flatData = useMemo(() => {
     const seenIds = new Set<string>();
@@ -94,12 +92,10 @@ export function DataTable({ tableId, viewId, searchQuery}: DataTableProps) {
     manualSorting: true,
   });
 
-
   const tableResetKey = useMemo(() => {
     const sortKey = sorts.map((s) => `${s.columnId}:${s.direction}`).join("|");
     return `table-${viewId}-${sortKey}`;
   }, [viewId, sorts]);
-  
 
   const rowVirtualizer = useVirtualizer({
     count: flatData.length,
@@ -114,12 +110,8 @@ export function DataTable({ tableId, viewId, searchQuery}: DataTableProps) {
 
   const fetchMoreOnBottomReached = useCallback(
     async (containerRefElement?: HTMLDivElement | null) => {
-      if (
-        !containerRefElement ||
-        !hasNextPage ||
-        isFetching
-      ) return;
-      
+      if (!containerRefElement || !hasNextPage || isFetching) return;
+
       if (containerRefElement) {
         const { scrollHeight, scrollTop, clientHeight } = containerRefElement;
         if (
@@ -138,7 +130,7 @@ export function DataTable({ tableId, viewId, searchQuery}: DataTableProps) {
     const fetchData = async () => {
       await fetchMoreOnBottomReached(tableContainerRef.current);
     };
-    
+
     void fetchData();
   }, [fetchMoreOnBottomReached]);
 
@@ -150,6 +142,9 @@ export function DataTable({ tableId, viewId, searchQuery}: DataTableProps) {
         limit: 100,
       });
       await utils.table.getColumns.invalidate();
+      await utils.table.getAllColumns.invalidate({
+        tableId: tableId,
+      });
     },
   });
 
@@ -164,9 +159,9 @@ export function DataTable({ tableId, viewId, searchQuery}: DataTableProps) {
 
   const insert1kRows = api.table.insert1kRows.useMutation({
     onSuccess: async () => {
-      await utils.table.getTableData.invalidate({ 
-        viewId, 
-        limit: 100 
+      await utils.table.getTableData.invalidate({
+        viewId,
+        limit: 100,
       });
     },
   });
@@ -205,9 +200,9 @@ export function DataTable({ tableId, viewId, searchQuery}: DataTableProps) {
       className="relative h-full overflow-auto border"
       onScroll={(e) => fetchMoreOnBottomReached(e.currentTarget)}
     >
-      <table 
+      <table
         /* forces table to rerender whenever sort is added or view is changed! */
-        key={tableResetKey} 
+        key={tableResetKey}
         className="box-border w-max min-w-fit table-fixed border-separate border-spacing-0 divide-y divide-gray-200"
       >
         <thead className="sticky top-0 z-10 bg-gray-50">

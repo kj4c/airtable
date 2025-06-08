@@ -23,12 +23,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             <Menu className="!h-5 !w-5 text-gray-500 transition-colors group-hover:text-black" />
           </Button>
           <Link href="/">
-            <Image 
-              src="/logo-side.png"
-              alt="Logo"
-              width={100}
-              height={30}
-            />
+            <Image src="/logo-side.png" alt="Logo" width={100} height={30} />
           </Link>
         </div>
         <AuthButton />

@@ -32,7 +32,7 @@ export default function SortDialog({ tableId, viewId }: Props) {
       await utils.sorts.getSorts.invalidate({ viewId });
       await utils.sorts.getSorts.refetch({ viewId });
       await utils.table.getTableData.invalidate({ viewId, limit: 100 });
-			await utils.table.getTableData.refetch({ viewId, limit: 100 });
+      await utils.table.getTableData.refetch({ viewId, limit: 100 });
     },
   });
 
@@ -40,8 +40,8 @@ export default function SortDialog({ tableId, viewId }: Props) {
     onSuccess: async () => {
       await utils.sorts.getSorts.invalidate({ viewId });
       await utils.sorts.getSorts.refetch({ viewId });
-			await utils.table.getTableData.invalidate({ viewId, limit: 100 });
-			await utils.table.getTableData.refetch({ viewId, limit: 100 });
+      await utils.table.getTableData.invalidate({ viewId, limit: 100 });
+      await utils.table.getTableData.refetch({ viewId, limit: 100 });
     },
   });
 
@@ -76,7 +76,9 @@ export default function SortDialog({ tableId, viewId }: Props) {
                 className="flex items-center justify-between space-x-2"
               >
                 <DropdownMenu>
-                  <DropdownMenuTrigger className="cursor-pointer hover:bg-gray-100 w-[80%] text-left border-1 px-1 text-sm">{sort.columnName}</DropdownMenuTrigger>
+                  <DropdownMenuTrigger className="w-[80%] cursor-pointer border-1 px-1 text-left text-sm hover:bg-gray-100">
+                    {sort.columnName}
+                  </DropdownMenuTrigger>
                   <DropdownMenuContent>
                     {fetchColumns.data?.map((col) => (
                       <DropdownMenuItem
@@ -94,33 +96,33 @@ export default function SortDialog({ tableId, viewId }: Props) {
                     ))}
                   </DropdownMenuContent>
                 </DropdownMenu>
-								 <DropdownMenu>
-                  <DropdownMenuTrigger className="cursor-pointer hover:bg-gray-100 w-[20%] text-left border-1 px-1 text-sm">
-										{sort.direction === "asc" ? "A → Z" : "Z → A"}
-									</DropdownMenuTrigger>
+                <DropdownMenu>
+                  <DropdownMenuTrigger className="w-[20%] cursor-pointer border-1 px-1 text-left text-sm hover:bg-gray-100">
+                    {sort.direction === "asc" ? "A → Z" : "Z → A"}
+                  </DropdownMenuTrigger>
                   <DropdownMenuContent>
-										<DropdownMenuItem
-											onClick={() =>
-												updateSort.mutate({
-													sortId: sort.id,
-													direction: "asc",
-												})
-											}
-											className="cursor-pointer hover:bg-gray-100"
-										>
-											A → Z
-										</DropdownMenuItem>
-										<DropdownMenuItem
-											onClick={() =>
-												updateSort.mutate({
-													sortId: sort.id,
-													direction: "desc",
-												})
-											}
-											className="cursor-pointer"
-										>
-											Z → A
-										</DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() =>
+                        updateSort.mutate({
+                          sortId: sort.id,
+                          direction: "asc",
+                        })
+                      }
+                      className="cursor-pointer hover:bg-gray-100"
+                    >
+                      A → Z
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() =>
+                        updateSort.mutate({
+                          sortId: sort.id,
+                          direction: "desc",
+                        })
+                      }
+                      className="cursor-pointer"
+                    >
+                      Z → A
+                    </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
               </div>

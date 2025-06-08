@@ -11,7 +11,6 @@ export default function BaseLayout({
   children: React.ReactNode;
   baseName: string;
 }) {
-
   return (
     <div className="flex h-screen flex-col">
       <header className="sticky top-0 flex min-h-[56px] items-center justify-between bg-green-700 px-1">

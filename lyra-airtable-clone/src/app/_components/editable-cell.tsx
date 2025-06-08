@@ -10,12 +10,7 @@ type EditableCellProps<TData> = {
   viewId: string;
 };
 
-
-
-export function EditableCell({
-  cell,
-  viewId,
-}: EditableCellProps<RowData>) {
+export function EditableCell({ cell, viewId }: EditableCellProps<RowData>) {
   const [isEditing, setIsEditing] = useState(false);
   const [editValue, setEditValue] = useState("");
 
@@ -31,7 +26,6 @@ export function EditableCell({
         viewId,
         limit: 100,
       });
-
 
       utils.table.getTableData.setInfiniteData(
         { viewId, limit: 100 },
@@ -57,7 +51,7 @@ export function EditableCell({
             ...oldData,
             pages: updatedPages,
           };
-        }
+        },
       );
 
       return { previous };
@@ -83,8 +77,8 @@ export function EditableCell({
   const stringValue =
     typeof currentValue === "string"
       ? currentValue
-      : currentValue?.toString() ?? "";
-    
+      : (currentValue?.toString() ?? "");
+
   const meta = cell.column.columnDef.meta as ColumnMeta | undefined;
   const columnType = meta?.type ?? "string";
 

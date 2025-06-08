@@ -17,12 +17,7 @@ export default async function Home() {
       </header>
       <main className="flex flex-col items-center justify-center">
         <div className="container flex flex-col items-center justify-center px-4">
-          <Image 
-          src="/logo-text.png"
-          alt="Logo"
-          width={500}
-          height={50}
-          />
+          <Image src="/logo-text.png" alt="Logo" width={500} height={50} />
           <div className="flex flex-col items-center justify-center">
             {session && (
               <Link href={`/home`}>

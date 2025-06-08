@@ -13,7 +13,7 @@ import {
 } from "~/server/db/schema";
 import { generateColumns, generateRows } from "./data";
 import { faker } from "@faker-js/faker";
-import { and, desc, eq, exists, or, SQL} from "drizzle-orm";
+import { and, desc, eq, exists, or, SQL } from "drizzle-orm";
 import { sql, asc } from "drizzle-orm";
 import { buildOperatorCondition } from "./filter";
 
@@ -109,7 +109,7 @@ export const tableRouter = createTRPCRouter({
       if (!newRow) {
         throw new Error("Failed to create new row");
       }
-      
+
       if (tableColumns.length > 0) {
         await db.insert(cells).values(
           tableColumns.map((col) => ({
@@ -190,7 +190,23 @@ export const tableRouter = createTRPCRouter({
       return viewData;
     }),
 
-  // returns all the columns for a table
+  getAllColumns: protectedProcedure
+    .input(
+      z.object({
+        tableId: z.string(),
+      }),
+    )
+    .query(async ({ input }) => {
+      const { tableId } = input;
+
+      const columns = await db.query.columns.findMany({
+        where: (columns, { eq }) => eq(columns.tableId, tableId),
+        orderBy: (columns, { asc }) => asc(columns.order),
+      });
+
+      return columns;
+  }),
+  // returns all the visible columns for a table
   getColumns: protectedProcedure
     .input(
       z.object({
@@ -203,6 +219,20 @@ export const tableRouter = createTRPCRouter({
 
       const columnsData = await getColumnsForTable(tableId, input.viewId);
       return columnsData;
+    }),
+  
+  getHiddenColumns: protectedProcedure
+    .input(
+      z.object({
+        viewId: z.string(),
+      }),
+    )
+    .query(async ({ input }) => {
+      const { viewId } = input; 
+      const hiddenColumns = await db.query.viewHiddenColumns.findMany({
+        where: (h, { eq }) => eq(h.viewId, viewId),
+      });
+      return hiddenColumns.map((h) => h.columnId);
     }),
 
   getTableData: protectedProcedure
@@ -238,32 +268,35 @@ export const tableRouter = createTRPCRouter({
       const visibleColumnIds = visibleColumns.map((col) => col.id);
 
       const filterConditions = filters
-      .filter((f) => {
-        const isValueRequired = f.operator !== "is empty" && f.operator !== "is not empty";
-        return !(isValueRequired && (!f.value || f.value.trim() === ""));
-      })
-      .map((f) => {
-        const columnMeta = visibleColumns.find((col) => col.id === f.columnId);
-        const isNumeric = columnMeta?.type === "number";
+        .filter((f) => {
+          const isValueRequired =
+            f.operator !== "is empty" && f.operator !== "is not empty";
+          return !(isValueRequired && (!f.value || f.value.trim() === ""));
+        })
+        .map((f) => {
+          const columnMeta = visibleColumns.find(
+            (col) => col.id === f.columnId,
+          );
+          const isNumeric = columnMeta?.type === "number";
 
-        const cellValue = isNumeric
-          ? sql`CAST(${cells.value} AS INTEGER)`
-          : sql`${cells.value}`;
+          const cellValue = isNumeric
+            ? sql`CAST(${cells.value} AS INTEGER)`
+            : sql`${cells.value}`;
 
-        return exists(
-          db
-            .select({ id: cells.id })
-            .from(cells)
-            .where(
-              and(
-                eq(cells.rowId, rows.id),
-                eq(cells.columnId, f.columnId),
-                buildOperatorCondition(cellValue, f.operator, f.value),
+          return exists(
+            db
+              .select({ id: cells.id })
+              .from(cells)
+              .where(
+                and(
+                  eq(cells.rowId, rows.id),
+                  eq(cells.columnId, f.columnId),
+                  buildOperatorCondition(cellValue, f.operator, f.value),
+                ),
               )
-            )
-            .limit(1)
-        );
-      });
+              .limit(1),
+          );
+        });
 
       const searchConditions: SQL[] = [];
       if (input.searchQuery?.trim()) {
@@ -285,26 +318,25 @@ export const tableRouter = createTRPCRouter({
                 and(
                   eq(cells.rowId, rows.id),
                   eq(cells.columnId, col.id),
-                  comparison
-                )
+                  comparison,
+                ),
               )
-              .limit(1)
+              .limit(1),
           );
         });
 
-        const filteredSearchQueries = searchQueries.filter((q): q is SQL => q !== undefined);
+        const filteredSearchQueries = searchQueries.filter(
+          (q): q is SQL => q !== undefined,
+        );
 
         // make em one big or
         if (filteredSearchQueries.length > 0) {
-          searchConditions.push(
-            or(...filteredSearchQueries)
-          );
+          // to disable red line
+          searchConditions.push(or(...filteredSearchQueries) ?? sql`TRUE`);
         }
       }
       // Build base where conditions
-      const baseConditions = [
-        eq(rows.tableId, tableId),
-      ];
+      const baseConditions = [eq(rows.tableId, tableId)];
 
       // build sort conditions
       const sortConditions =
@@ -317,14 +349,14 @@ export const tableRouter = createTRPCRouter({
                 const isNumeric = col?.type === "number";
 
                 const cellValueSql = isNumeric
-                ? sql`(
+                  ? sql`(
                   SELECT CAST(${cells.value} AS INTEGER)
                   FROM ${cells}
                   WHERE ${cells.rowId} = ${rows.id}
                     AND ${cells.columnId} = ${s.columnId}
                   LIMIT 1
                 )`
-                : sql`(
+                  : sql`(
                   SELECT ${cells.value} 
                   FROM ${cells} 
                   WHERE ${cells.rowId} = ${rows.id} 
@@ -345,13 +377,7 @@ export const tableRouter = createTRPCRouter({
         })
         .from(rows)
         .leftJoin(cells, eq(cells.rowId, rows.id))
-        .where(
-          and(
-            ...baseConditions,
-            ...filterConditions,
-            ...searchConditions,
-          ),
-        )
+        .where(and(...baseConditions, ...filterConditions, ...searchConditions))
         .orderBy(...sortConditions)
         .offset(cursor)
         .limit(limit);

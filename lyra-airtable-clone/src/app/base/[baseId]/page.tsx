@@ -39,6 +39,9 @@ export default function BaseDashboard() {
   const insertColumn = api.table.createColumn.useMutation({
     onSuccess: async () => {
       await utils.table.getColumns.invalidate();
+      await utils.table.getAllColumns.invalidate({
+        tableId: selectedTableId ?? "",
+      });
     },
   });
 
@@ -60,9 +63,7 @@ export default function BaseDashboard() {
   };
 
   // fetch tables
-  const {
-    data: baseData,
-  } = api.base.getTables.useQuery(
+  const { data: baseData } = api.base.getTables.useQuery(
     {
       baseId: baseId,
     },
@@ -80,7 +81,7 @@ export default function BaseDashboard() {
     setSelectedTableId(tableId);
     // the first one
     console.log("Selected table ID:", tableId);
-  }
+  };
 
   useEffect(() => {
     if (viewsData && viewsData.length > 0) {
@@ -108,7 +109,7 @@ export default function BaseDashboard() {
             {baseData?.map((t) => (
               <button
                 key={t.id}
-                onClick={ () => handleTableChange(t.id)}
+                onClick={() => handleTableChange(t.id)}
                 disabled={selectedTableId === t.id}
                 className={`h-8 cursor-pointer rounded-t-xs bg-green-800 px-4 py-1 text-xs ${
                   selectedTableId === t.id
@@ -131,11 +132,11 @@ export default function BaseDashboard() {
           </div>
           <div className="border-t-0">
             {selectedTableId && selectedViewId && (
-              <TableToolbar 
-              tableId={selectedTableId}
-              viewId={selectedViewId}
-              searchQuery={searchQuery}
-              setSearchQuery={setSearchQuery}
+              <TableToolbar
+                tableId={selectedTableId}
+                viewId={selectedViewId}
+                searchQuery={searchQuery}
+                setSearchQuery={setSearchQuery}
               />
             )}
           </div>
@@ -153,7 +154,11 @@ export default function BaseDashboard() {
           <div className="flex-1 overflow-hidden">
             {selectedTableId && selectedViewId && (
               <div className="h-screen w-full overflow-auto">
-                <DataTable tableId={selectedTableId} viewId={selectedViewId} searchQuery={debouncedSearchQuery}/>
+                <DataTable
+                  tableId={selectedTableId}
+                  viewId={selectedViewId}
+                  searchQuery={debouncedSearchQuery}
+                />
               </div>
             )}
           </div>

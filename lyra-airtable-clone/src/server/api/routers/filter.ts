@@ -1,10 +1,10 @@
 // src/server/api/routers/base.ts
 
-import { eq, gt, ilike, lt, ne, not, type SQL } from "drizzle-orm";
+import { and, eq, gt, ilike, lt, ne, not, type SQL } from "drizzle-orm";
 import { z } from "zod";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import { db } from "~/server/db";
-import { columns, viewFilters } from "~/server/db/schema";
+import { columns, viewFilters, viewHiddenColumns } from "~/server/db/schema";
 
 export function buildOperatorCondition(
   column: SQL,
@@ -70,7 +70,7 @@ export const filterRouter = createTRPCRouter({
     )
     .query(async ({ input }) => {
       const { viewId } = input;
-    
+
       const filters = await db
         .select({
           id: viewFilters.id,
@@ -98,8 +98,11 @@ export const filterRouter = createTRPCRouter({
       }),
     )
     .mutation(async ({ input }) => {
-      const { filterId, ...updates} = input;
-      if (updates.operator === "is empty" || updates.operator === "is not empty") {
+      const { filterId, ...updates } = input;
+      if (
+        updates.operator === "is empty" ||
+        updates.operator === "is not empty"
+      ) {
         updates.value = null;
       }
 
@@ -108,10 +111,11 @@ export const filterRouter = createTRPCRouter({
         return;
       }
 
-      await db.update(viewFilters).set(updates).where(eq(viewFilters.id, filterId));
-      
-    }
-  ),
+      await db
+        .update(viewFilters)
+        .set(updates)
+        .where(eq(viewFilters.id, filterId));
+    }),
 
   deleteFilter: protectedProcedure
     .input(
@@ -123,6 +127,43 @@ export const filterRouter = createTRPCRouter({
       const { filterId } = input;
 
       await db.delete(viewFilters).where(eq(viewFilters.id, filterId));
-    }
-  ),
+    }),
+
+  hideColumn: protectedProcedure
+    .input(
+      z.object({
+        viewId: z.string(),
+        columnId: z.string(),
+      }),
+    )
+    .mutation(async ({ input }) => {
+      const { viewId, columnId } = input;
+
+      await db
+        .insert(viewHiddenColumns)
+        .values({
+          viewId,
+          columnId,
+      });
+  }),
+  
+  unhideColumn: protectedProcedure
+    .input(
+      z.object({
+        viewId: z.string(),
+        columnId: z.string(),
+      }),
+    )
+    .mutation(async ({ input }) => {
+      const { viewId, columnId } = input;
+
+      await db
+        .delete(viewHiddenColumns)
+        .where(
+          and(
+          eq(viewHiddenColumns.viewId, viewId),
+            eq(viewHiddenColumns.columnId, columnId),
+          ),
+      );
+    })
 });
