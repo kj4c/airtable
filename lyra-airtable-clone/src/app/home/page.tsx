@@ -54,7 +54,7 @@ export default function BasePage() {
     return null;
   }
 
-  const handleCreateBase = async() => {
+  const handleCreateBase = async () => {
     if (!baseName.trim()) return;
     const base = await createBase.mutateAsync({ name: baseName });
 
@@ -74,13 +74,13 @@ export default function BasePage() {
 
         for (let i = 0; i < 3; i++) {
           await createRow.mutateAsync({
-            tableId: table.id
+            tableId: table.id,
           });
         }
       }
     }
     setOpen(false);
-  }
+  };
 
   return (
     <AppLayout>
@@ -110,16 +110,12 @@ export default function BasePage() {
               onChange={(e) => setBaseName(e.target.value)}
               onKeyDown={async (e) => {
                 if (e.key === "Enter") {
-                    await handleCreateBase();
-                  }
+                  await handleCreateBase();
                 }
-              }
+              }}
               placeholder="Base name"
             />
-            <Button
-              className="cursor-pointer"
-              onClick={handleCreateBase}
-            >
+            <Button className="cursor-pointer" onClick={handleCreateBase}>
               Create
             </Button>
             <p className="mt-2 flex justify-center text-sm text-red-500">

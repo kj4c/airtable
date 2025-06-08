@@ -1,7 +1,8 @@
 import { auth } from "~/server/auth";
 import { AuthButton } from "~/components/ui/auth-button";
-import { api, HydrateClient } from "~/trpc/server";
+import { HydrateClient } from "~/trpc/server";
 import { Button } from "~/components/ui/button";
+import Image from "next/image";
 import Link from "next/link";
 
 export default async function Home() {
@@ -16,7 +17,7 @@ export default async function Home() {
       </header>
       <main className="flex flex-col items-center justify-center">
         <div className="container flex flex-col items-center justify-center px-4">
-          <img src="/logo-text.png"></img>
+          <Image src="/logo-text.png" alt="Logo" />
           <div className="flex flex-col items-center justify-center">
             {session && (
               <Link href={`/home`}>

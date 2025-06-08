@@ -1,7 +1,6 @@
-import { relations, sql } from "drizzle-orm";
+import { sql } from "drizzle-orm";
 import { index, pgTable, primaryKey, unique } from "drizzle-orm/pg-core";
 import { type AdapterAccount } from "next-auth/adapters";
-import { d } from "node_modules/drizzle-kit/index-BAUrj6Ib.mjs";
 
 /**
  * This is an example of how to use the multi-project schema feature of Drizzle ORM. Use the same
@@ -98,6 +97,47 @@ export const views = pgTable("view", (d) => ({
     .uuid()
     .notNull()
     .references(() => tables.id),
+  createdAt: d.timestamp().defaultNow().notNull(),
+}));
+
+export const viewFilters = pgTable("view_filter", (d) => ({
+  id: d.uuid().primaryKey().defaultRandom(),
+  viewId: d
+    .uuid()
+    .notNull()
+    .references(() => views.id),
+  columnId: d
+    .uuid()
+    .notNull()
+    .references(() => columns.id),
+  operator: d.varchar({ length: 50 }).notNull(),
+  value: d.text(),
+}));
+
+export const viewSorts = pgTable("view_sort", (d) => ({
+  id: d.uuid().primaryKey().defaultRandom(),
+  viewId: d
+    .uuid()
+    .notNull()
+    .references(() => views.id),
+  columnId: d
+    .uuid()
+    .notNull()
+    .references(() => columns.id),
+  direction: d.varchar({ length: 4 }).notNull(),
+  sort_order: d.integer().notNull().default(0),
+}));
+
+export const viewHiddenColumns = pgTable("view_hidden_column", (d) => ({
+  id: d.uuid().primaryKey().defaultRandom(),
+  viewId: d
+    .uuid()
+    .notNull()
+    .references(() => views.id),
+  columnId: d
+    .uuid()
+    .notNull()
+    .references(() => columns.id),
 }));
 
 export const columns = pgTable("column", (d) => ({

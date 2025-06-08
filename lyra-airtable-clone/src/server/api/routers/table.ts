@@ -3,16 +3,38 @@
 import { z } from "zod";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import { db } from "~/server/db";
-import { cells, columns, rows } from "~/server/db/schema";
+import {
+  cells,
+  columns,
+  rows,
+  viewFilters,
+  views,
+  viewSorts,
+} from "~/server/db/schema";
 import { generateColumns, generateRows } from "./data";
 import { faker } from "@faker-js/faker";
-import { eq, or } from "drizzle-orm";
-import { sql } from "drizzle-orm";
+import { and, desc, eq, exists} from "drizzle-orm";
+import { sql, asc } from "drizzle-orm";
+import { buildOperatorCondition } from "./filter";
 
-async function getColumnsForTable(tableId: string) {
-  return db.query.columns.findMany({
-    where: (columns, { eq }) => eq(columns.tableId, tableId),
-  });
+async function getColumnsForTable(tableId: string, viewId?: string) {
+  const [allColumns, hiddenColumns] = await Promise.all([
+    db.query.columns.findMany({
+      where: (columns, { eq }) => eq(columns.tableId, tableId),
+    }),
+    viewId
+      ? db.query.viewHiddenColumns.findMany({
+          where: (h, { eq }) => eq(h.viewId, viewId),
+        })
+      : Promise.resolve([]),
+  ]);
+
+  const hiddenColumnIds = new Set(hiddenColumns.map((h) => h.columnId));
+  const visibleColumns = allColumns.filter(
+    (col) => !hiddenColumnIds.has(col.id),
+  );
+
+  return visibleColumns;
 }
 
 export const tableRouter = createTRPCRouter({
@@ -25,7 +47,7 @@ export const tableRouter = createTRPCRouter({
         tableId: z.string(),
       }),
     )
-    .mutation(async ({ input, ctx }) => {
+    .mutation(async ({ input }) => {
       const { name, type, tableId } = input;
 
       const existing = await db.query.columns.findMany({
@@ -72,7 +94,11 @@ export const tableRouter = createTRPCRouter({
           ? 0
           : Math.max(...existing.map((r) => r.order ?? 0)) + 1;
 
-      const newRow = await db
+      const tableColumns = await db.query.columns.findMany({
+        where: (c, { eq }) => eq(c.tableId, tableId),
+      });
+
+      const [newRow] = await db
         .insert(rows)
         .values({
           tableId: tableId,
@@ -80,7 +106,21 @@ export const tableRouter = createTRPCRouter({
         })
         .returning();
 
-      return newRow[0];
+      if (!newRow) {
+        throw new Error("Failed to create new row");
+      }
+      
+      if (tableColumns.length > 0) {
+        await db.insert(cells).values(
+          tableColumns.map((col) => ({
+            rowId: newRow.id,
+            columnId: col.id,
+            value: "", // no val
+          })),
+        );
+      }
+
+      return newRow;
     }),
 
   insertCell: protectedProcedure
@@ -110,8 +150,30 @@ export const tableRouter = createTRPCRouter({
       return newCell[0];
     }),
 
-  // returns all the columns for a table
-  getColumns: protectedProcedure
+  createView: protectedProcedure
+    .input(
+      z.object({
+        name: z.string().min(1),
+        tableId: z.string(),
+      }),
+    )
+    .mutation(async ({ input }) => {
+      const { name, tableId } = input;
+
+      // create a new view in the database
+      const newView = await db
+        .insert(views)
+        .values({
+          name,
+          tableId,
+        })
+        .returning();
+
+      return newView[0];
+    }),
+
+  // get all views
+  getViews: protectedProcedure
     .input(
       z.object({
         tableId: z.string(),
@@ -120,87 +182,170 @@ export const tableRouter = createTRPCRouter({
     .query(async ({ input }) => {
       const { tableId } = input;
 
-      const columnsData = await getColumnsForTable(tableId);
+      const viewData = await db.query.views.findMany({
+        where: (views, { eq }) => eq(views.tableId, tableId),
+        orderBy: (views, { asc }) => asc(views.createdAt),
+      });
+
+      return viewData;
+    }),
+
+  // returns all the columns for a table
+  getColumns: protectedProcedure
+    .input(
+      z.object({
+        tableId: z.string(),
+        viewId: z.string().optional(),
+      }),
+    )
+    .query(async ({ input }) => {
+      const { tableId } = input;
+
+      const columnsData = await getColumnsForTable(tableId, input.viewId);
       return columnsData;
     }),
 
   getTableData: protectedProcedure
     .input(
       z.object({
-        tableId: z.string(),
+        viewId: z.string(),
         limit: z.number(),
         cursor: z.number().optional(),
       }),
     )
     .query(async ({ input }) => {
-      const { tableId, limit, cursor } = input;
+      const { viewId, limit, cursor = 0 } = input;
 
-      const rowsForTable = await db.query.rows.findMany({
-        where: (rows, { eq, gt }) =>
-          cursor
-            ? eq(rows.tableId, tableId) && gt(rows.order, cursor)
-            : eq(rows.tableId, tableId),
-        orderBy: (rows, { asc }) => asc(rows.order),
-        limit,
+      const view = await db.query.views.findFirst({
+        where: (views, { eq }) => eq(views.id, viewId),
       });
 
-      const rowIds = rowsForTable.map((r) => r.id);
+      if (!view) {
+        throw new Error("View not found");
+      }
 
-      const columnsForTable = await db.query.columns.findMany({
-        where: (c, { eq }) => eq(c.tableId, tableId),
+      const tableId = view.tableId;
+
+      const [filters, sorts, visibleColumns] = await Promise.all([
+        db.query.viewFilters.findMany({
+          where: eq(viewFilters.viewId, viewId),
+        }),
+        db.query.viewSorts.findMany({ where: eq(viewSorts.viewId, viewId) }),
+        getColumnsForTable(tableId, viewId),
+      ]);
+
+      const visibleColumnIds = visibleColumns.map((col) => col.id);
+
+      const filterConditions = filters
+      .filter((f) => {
+        const isValueRequired = f.operator !== "is empty" && f.operator !== "is not empty";
+        return !(isValueRequired && (!f.value || f.value.trim() === ""));
+      })
+      .map((f) => {
+        const columnMeta = visibleColumns.find((col) => col.id === f.columnId);
+        const isNumeric = columnMeta?.type === "number";
+
+        const cellValue = isNumeric
+          ? sql`CAST(${cells.value} AS INTEGER)`
+          : sql`${cells.value}`;
+
+        return exists(
+          db
+            .select({ id: cells.id })
+            .from(cells)
+            .where(
+              and(
+                eq(cells.rowId, rows.id),
+                eq(cells.columnId, f.columnId),
+                buildOperatorCondition(cellValue, f.operator, f.value),
+              )
+            )
+            .limit(1)
+        );
       });
 
+      // Build base where conditions
+      const baseConditions = [
+        eq(rows.tableId, tableId),
+      ];
+
+      // build sort conditions
+      const sortConditions =
+        sorts.length > 0
+          ? sorts
+              // order it based on the order of the sorts
+              .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
+              .map((s) => {
+                const col = visibleColumns.find((c) => c.id === s.columnId);
+                const isNumeric = col?.type === "number";
+
+                const cellValueSql = isNumeric
+                ? sql`(
+                  SELECT CAST(${cells.value} AS INTEGER)
+                  FROM ${cells}
+                  WHERE ${cells.rowId} = ${rows.id}
+                    AND ${cells.columnId} = ${s.columnId}
+                  LIMIT 1
+                )`
+                : sql`(
+                  SELECT ${cells.value} 
+                  FROM ${cells} 
+                  WHERE ${cells.rowId} = ${rows.id} 
+                    AND ${cells.columnId} = ${s.columnId}
+                  LIMIT 1
+                )`;
+                return s.direction === "asc"
+                  ? asc(cellValueSql)
+                  : desc(cellValueSql);
+              })
+          : [asc(rows.order)];
+
+      const filteredRows = await db
+        .select({
+          id: rows.id,
+          order: rows.order,
+          tableId: rows.tableId,
+        })
+        .from(rows)
+        .leftJoin(cells, eq(cells.rowId, rows.id))
+        .where(
+          and(
+            ...baseConditions,
+            ...filterConditions,
+          ),
+        )
+        .orderBy(...sortConditions)
+        .offset(cursor)
+        .limit(limit);
+
+      console.log("Filtered Rows:", filteredRows);
+
+      const rowIds = filteredRows.map((r) => r.id);
       const cellsForTable = rowIds.length
         ? await db.query.cells.findMany({
             // rowsId is a table of row ids find any cell within this row
-            where: (c, { inArray }) => inArray(c.rowId, rowIds),
+            where: (c, { inArray, and }) =>
+              and(
+                inArray(c.rowId, rowIds),
+                inArray(c.columnId, visibleColumnIds),
+              ),
           })
         : [];
 
-      const columnDefs = generateColumns(columnsForTable);
-      const rowData = generateRows(
-        rowsForTable,
-        columnsForTable,
-        cellsForTable,
-      );
-
-      const lastRow = rowsForTable[rowsForTable.length - 1];
-
-      const result = await db
-        .select({
-          count: sql<number>`count(*)`,
-        })
-        .from(rows)
-        .where(eq(rows.tableId, tableId));
-
-      const totalRowCount = result[0]?.count ?? 0;
+      const totalRowCount = filteredRows.length;
+      const columnDefs = generateColumns(visibleColumns);
+      const rowData = generateRows(filteredRows, visibleColumns, cellsForTable);
+      const nextCursor = cursor + totalRowCount;
+      const hasMore = nextCursor < totalRowCount;
 
       return {
         data: rowData,
         columns: columnDefs,
-        nextCursor: lastRow?.order ?? null,
+        nextCursor: hasMore ? nextCursor : null,
         meta: {
           totalRowCount,
-        }
+        },
       };
-    }),
-
-  getCells: protectedProcedure
-    .input(
-      z.object({
-        rowId: z.string(),
-        columnId: z.string(),
-      }),
-    )
-    .query(async ({ input, ctx }) => {
-      const { rowId, columnId } = input;
-      // values should match the schema of the table
-      const cell = await db.query.cells.findFirst({
-        where: (cells, { eq }) =>
-          eq(cells.rowId, rowId) && eq(cells.columnId, columnId),
-      });
-
-      return cell;
     }),
 
   insert1kRows: protectedProcedure

@@ -1,12 +1,11 @@
 "use client";
 
 import {
-  type ColumnDef,
   flexRender,
   getCoreRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import React, { useMemo } from "react";
+import React, { useMemo, useCallback } from "react";
 import { Button } from "../../components/ui/button";
 import { api } from "~/trpc/react";
 import {
@@ -27,66 +26,98 @@ import { Input } from "../../components/ui/input";
 import { Plus } from "lucide-react";
 import { EditableCell } from "./editable-cell";
 import type { RowData } from "types.tsx";
-import { useVirtualizer } from '@tanstack/react-virtual'
+import { useVirtualizer } from "@tanstack/react-virtual";
 
 // define the type of the data, TData is a generic type
 type DataTableProps = {
   tableId: string;
+  viewId: string;
 };
 
 function capitalizeFirstLetter(str: string) {
   return str.charAt(0).toUpperCase() + str.slice(1);
-} 
+}
 
-
-
-export function DataTable({ tableId }: DataTableProps) {
-  const [open, setOpen] = React.useState(false); 
+export function DataTable({ tableId, viewId }: DataTableProps) {
+  const [open, setOpen] = React.useState(false);
   const [columnName, setColumnName] = React.useState("");
   const [type, setType] = React.useState<"text" | "number">("text");
   const utils = api.useUtils();
-  const tableContainerRef = React.useRef<HTMLDivElement>(null)
+  const tableContainerRef = React.useRef<HTMLDivElement>(null);
+  const { data: sorts = [] } = api.sorts.getSorts.useQuery({ viewId });
 
-  const {
-    data,
-    fetchNextPage,
-    hasNextPage,
-    isFetching,
-  } = api.table.getTableData.useInfiniteQuery(
-    {
-      tableId,
-      limit: 100,
-    },
-    {
-      getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
+
+  const { data, fetchNextPage, hasNextPage, isFetching } =
+    api.table.getTableData.useInfiniteQuery(
+      {
+        viewId,
+        limit: 100,
+      },
+      {
+        getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
+      },
+    );
+
+  // get all columns memoised
+  const firstPageColumns = data?.pages?.[0]?.columns;
+
+  const columns = useMemo(() => {
+    return firstPageColumns ?? [];
+  }, [firstPageColumns, viewId]);
+
+
+  const flatData = useMemo(() => {
+    const seenIds = new Set<string>();
+    const deduplicatedData: RowData[] = [];
+
+    for (const page of data?.pages ?? []) {
+      for (const row of page.data) {
+        if (!seenIds.has(row.id)) {
+          seenIds.add(row.id);
+          deduplicatedData.push(row);
+        }
+      }
     }
-  );
 
-  const columns = data?.pages?.[0]?.columns ?? [];
-  const flatData = useMemo(
-    () => data?.pages?.flatMap(page => page.data) ?? [],
-    [data]
-  );
+    return deduplicatedData;
+  }, [data?.pages, viewId]);
 
   const totalDBRowCount = data?.pages?.[0]?.meta?.totalRowCount ?? 0;
   const totalFetched = flatData.length;
 
+  const table = useReactTable({
+    data: flatData,
+    columns,
+    getCoreRowModel: getCoreRowModel(),
+    manualSorting: true,
+  });
+
+
+  const tableResetKey = useMemo(() => {
+    const sortKey = sorts.map((s) => `${s.columnId}:${s.direction}`).join("|");
+    return `table-${viewId}-${sortKey}`;
+  }, [viewId, sorts]);
+  
 
   const rowVirtualizer = useVirtualizer({
     count: flatData.length,
     getScrollElement: () => tableContainerRef.current,
-    estimateSize: () => 40, // row height estimate
+    estimateSize: () => 40,
     measureElement:
-      typeof window !== 'undefined' &&
-      navigator.userAgent.includes('Firefox')
-        ? element => element?.getBoundingClientRect().height
+      typeof window !== "undefined" && navigator.userAgent.includes("Firefox")
+        ? (element) => element?.getBoundingClientRect().height
         : undefined,
     overscan: 10,
   });
 
-    // Fetch more rows on scroll bottom
-  const fetchMoreOnBottomReached = React.useCallback(
+  const fetchMoreOnBottomReached = useCallback(
     async (containerRefElement?: HTMLDivElement | null) => {
+      if (
+        !containerRefElement ||
+        !hasNextPage ||
+        isFetching
+      ) return;
+      
       if (containerRefElement) {
         const { scrollHeight, scrollTop, clientHeight } = containerRefElement;
         if (
@@ -98,7 +129,7 @@ export function DataTable({ tableId }: DataTableProps) {
         }
       }
     },
-    [fetchNextPage, isFetching, totalFetched, totalDBRowCount]
+    [fetchNextPage, isFetching, totalFetched, totalDBRowCount],
   );
 
   React.useEffect(() => {
@@ -109,59 +140,82 @@ export function DataTable({ tableId }: DataTableProps) {
     void fetchData();
   }, [fetchMoreOnBottomReached]);
 
-  const table = useReactTable({
-    data: flatData,
-    columns,
-    getCoreRowModel: getCoreRowModel(),
-    manualSorting: true,
-  });
-  console.log(flatData.map(r => r.order)); 
-
+  // invalidate the tables
   const createColumn = api.table.createColumn.useMutation({
     onSuccess: async () => {
       await utils.table.getTableData.invalidate({
-        tableId: tableId,
+        viewId: viewId,
         limit: 100,
       });
-      await utils.table.getTableData.refetch({ tableId, limit: 100 });
+      await utils.table.getColumns.invalidate();
     },
   });
 
   const createRow = api.table.createRow.useMutation({
     onSuccess: async () => {
       await utils.table.getTableData.invalidate({
-        tableId: tableId,
+        viewId: viewId,
         limit: 100,
       });
-      await utils.table.getTableData.refetch({ tableId, limit: 100 });
     },
   });
 
-  // fetch 1k rows
-  const insert100kRows = api.table.insert1kRows.useMutation({
+  const insert1kRows = api.table.insert1kRows.useMutation({
     onSuccess: async () => {
-      await utils.table.getTableData.invalidate({ tableId, limit: 100});
-      await utils.table.getTableData.refetch({ tableId, limit: 100 });
+      await utils.table.getTableData.invalidate({ 
+        viewId, 
+        limit: 100 
+      });
     },
   });
+
+  const handleCreateColumn = useCallback(async () => {
+    if (columnName.trim()) {
+      createColumn.mutate({
+        name: columnName,
+        type: type,
+        tableId: tableId,
+      });
+      setColumnName("");
+      setType("text");
+      setOpen(false);
+    }
+    await utils.table.getColumns.invalidate();
+  }, [columnName, type, tableId, createColumn]);
+
+  // Handle row creation
+  const handleCreateRow = useCallback(() => {
+    createRow.mutate({
+      tableId: tableId,
+    });
+  }, [tableId, createRow]);
+
+  // Handle bulk insert
+  const handleInsert1kRows = useCallback(() => {
+    insert1kRows.mutate({
+      tableId: tableId,
+    });
+  }, [tableId, insert1kRows]);
 
   return (
-    <div 
+    <div
       ref={tableContainerRef}
       className="relative h-full overflow-auto border"
       onScroll={(e) => fetchMoreOnBottomReached(e.currentTarget)}
     >
-      <table className="box-border min-w-fit w-max table-fixed border-separate border-spacing-0 divide-y divide-gray-200">
-        <thead className="bg-gray-50 sticky top-0 z-10">
+      <table 
+        /* forces table to rerender whenever sort is added or view is changed! */
+        key={tableResetKey} 
+        className="box-border w-max min-w-fit table-fixed border-separate border-spacing-0 divide-y divide-gray-200"
+      >
+        <thead className="sticky top-0 z-10 bg-gray-50">
           {table.getHeaderGroups().map((headerGroup) => (
-            // get the columns
             <tr key={headerGroup.id}>
-              <th className="w-10 bg-gray-100 border-b-1">
-              </th>
+              <th className="w-10 border-b-1 bg-gray-100"></th>
               {headerGroup.headers.map((header) => (
                 <th
                   key={header.id}
-                  className="w-[150px] border-l-0 border-r-1 border-b-1 bg-gray-100 px-4 py-2 text-left text-sm font-light text-black"
+                  className="w-[150px] border-r-1 border-b-1 border-l-0 bg-gray-100 px-4 py-2 text-left text-sm font-light text-black"
                 >
                   {flexRender(
                     header.column.columnDef.header,
@@ -169,8 +223,7 @@ export function DataTable({ tableId }: DataTableProps) {
                   )}
                 </th>
               ))}
-              {/* Add column for the plus button */}
-              <th className="flex w-[60px] items-center border-b-1 border-r-1 bg-gray-100 justify-center text-left text-sm font-semibold text-black">
+              <th className="flex w-[60px] items-center justify-center border-r-1 border-b-1 bg-gray-100 text-left text-sm font-semibold text-black">
                 <Dialog open={open} onOpenChange={setOpen}>
                   <DialogTrigger asChild>
                     <Button
@@ -194,6 +247,11 @@ export function DataTable({ tableId }: DataTableProps) {
                       onChange={(e) => {
                         setColumnName(e.target.value);
                       }}
+                      onKeyDown={async (e) => {
+                        if (e.key === "Enter") {
+                          await handleCreateColumn();
+                        }
+                      }}
                       value={columnName}
                     />
                     <DropdownMenu>
@@ -210,21 +268,11 @@ export function DataTable({ tableId }: DataTableProps) {
                       </DropdownMenuContent>
                     </DropdownMenu>
                     <Button
-                      onClick={() => {
-                        if (columnName.trim()) {
-                          createColumn.mutate({
-                            name: columnName,
-                            type: type,
-                            tableId: tableId,
-                          });
-                          setColumnName("");
-                          setType("text");
-                          setOpen(false);
-                        }
-                      }}
+                      onClick={handleCreateColumn}
                       className="cursor-pointer text-white"
+                      disabled={createColumn.isPending}
                     >
-                      Create column
+                      {createColumn.isPending ? "Creating..." : "Create column"}
                     </Button>
                   </DialogContent>
                 </Dialog>
@@ -232,59 +280,61 @@ export function DataTable({ tableId }: DataTableProps) {
             </tr>
           ))}
         </thead>
-        <tbody 
+        <tbody
           className="relative block divide-y divide-gray-100 bg-white"
           style={{ height: `${rowVirtualizer.getTotalSize() + 40}px` }}
         >
           {rowVirtualizer.getVirtualItems().map((virtualRow) => {
-            // display the rows
-            // put number
             const row = table.getRowModel().rows[virtualRow.index];
-            if (!row) return null; // handle case where row is not found
-            
+            if (!row) return null;
+
             return (
-              <tr 
+              <tr
                 data-index={virtualRow.index}
                 key={row.id}
-                ref={node => rowVirtualizer.measureElement(node)}
+                ref={(node) => rowVirtualizer.measureElement(node)}
                 className="absolute flex w-full border-b"
-                style={{ transform: `translateY(${virtualRow.start}px)` }} 
+                style={{ transform: `translateY(${virtualRow.start}px)` }}
               >
-                <td className="flex h-10 max-w-[40px] min-w-[40px] border-b-1 items-center justify-center text-sm text-gray-900">
+                <td className="flex h-10 max-w-[40px] min-w-[40px] items-center justify-center border-b-1 text-sm text-gray-900">
                   {row.index + 1}
                 </td>
                 {row.getVisibleCells().map((cell) => (
-                  <EditableCell key={cell.id} cell={cell} tableId={tableId} />
+                  <EditableCell
+                    key={cell.id}
+                    cell={cell}
+                    tableId={tableId}
+                    viewId={viewId}
+                  />
                 ))}
               </tr>
             );
           })}
           <tr
-            className="absolute flex w-[190px] border-b border-r"
-            style={{ transform: `translateY(${rowVirtualizer.getTotalSize()}px)` }}
+            className="absolute flex w-[190px] border-r border-b"
+            style={{
+              transform: `translateY(${rowVirtualizer.getTotalSize()}px)`,
+            }}
           >
-            <td className="flex w-full items-center justify-start" colSpan={columns.length}>
+            <td
+              className="flex w-full items-center justify-start"
+              colSpan={columns.length}
+            >
               <div className="flex items-center space-x-2">
                 <Button
-                  onClick={() => {
-                    createRow.mutate({
-                      tableId: tableId,
-                    });
-                  }}
+                  onClick={handleCreateRow}
                   size="icon"
                   className="w-10 cursor-pointer items-center justify-center rounded-none bg-white text-black shadow-none hover:bg-gray-50"
+                  disabled={createRow.isPending}
                 >
                   <Plus className="text-gray-500 transition-colors" />
                 </Button>
                 <Button
-                  className=" border-1 h-2 cursor-pointer bg-white text-black hover:bg-gray-50"
-                  onClick={() => {
-                    insert100kRows.mutate({
-                      tableId: tableId,
-                    });
-                  }}
+                  className="h-2 cursor-pointer border-1 bg-white text-black hover:bg-gray-50"
+                  onClick={handleInsert1kRows}
+                  disabled={insert1kRows.isPending}
                 >
-                  Add 1k rows
+                  {insert1kRows.isPending ? "Adding..." : "Add 1k rows"}
                 </Button>
               </div>
             </td>

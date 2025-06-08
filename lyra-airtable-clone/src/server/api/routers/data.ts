@@ -1,6 +1,6 @@
 // helper function to convert columns to TanStack Columns
 import { type ColumnDef } from "@tanstack/react-table";
-import type { RowData } from "types.tsx";
+import type { ColumnMeta, RowData } from "types.tsx";
 
 type DBColumn = {
   order: number;
@@ -23,7 +23,11 @@ type DBCell = {
   columnId: string;
 };
 
-export function generateColumns(columns: DBColumn[]): ColumnDef<RowData>[] {
+type ColumnWithMeta = ColumnDef<RowData> & {
+  meta: ColumnMeta;
+};
+
+export function generateColumns(columns: DBColumn[]): ColumnWithMeta[] {
   return columns
     .filter((col) => col.name !== "order") // filter out the order column
     .map((col) => ({
@@ -32,6 +36,9 @@ export function generateColumns(columns: DBColumn[]): ColumnDef<RowData>[] {
 
       // what is displayed in the header
       header: col.name,
+      meta: {
+        type: col.type === "number" ? "number" : "string",
+      },
 
       // type of the cell
       cell: ({ getValue }) => {
@@ -40,7 +47,6 @@ export function generateColumns(columns: DBColumn[]): ColumnDef<RowData>[] {
           const num = Number(value);
           return isNaN(num) ? "" : num;
         }
-
         return value ?? "";
       },
     }));
@@ -52,20 +58,25 @@ export function generateRows(
   cols: DBColumn[],
   cells: DBCell[],
 ): RowData[] {
-  return rows.map((row) => {
-    const cellData = cells.filter((cell) => cell.rowId === row.id);
+  const cellMap = new Map<string, DBCell[]>();
 
-    // get the row id and then get the value for each column.
+  for (const cell of cells) {
+    if (!cellMap.has(cell.rowId)) {
+      cellMap.set(cell.rowId, []);
+    }
+    cellMap.get(cell.rowId)!.push(cell);
+  }
+
+  return rows.map((row) => {
     const rowData: RowData = {
       id: row.id,
     };
 
-    cellData.forEach((cell) => {
-      const foundCol = cols.find((col) => col.id === cell.columnId);
-      if (foundCol) {
-        rowData[foundCol.id] = cell.value ?? "";
-      }
-    });
+    const cellData = cellMap.get(row.id) ?? [];
+
+    for (const cell of cellData) {
+      rowData[cell.columnId] = cell.value ?? "";
+    }
 
     return rowData;
   });

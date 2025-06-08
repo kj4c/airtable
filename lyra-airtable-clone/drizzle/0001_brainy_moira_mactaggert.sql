@@ -1,8 +1,8 @@
-CREATE TABLE "view" (
-	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
-	"name" varchar(255) NOT NULL,
-	"tableId" uuid NOT NULL
-);
---> statement-breakpoint
-ALTER TABLE "view" ADD CONSTRAINT "view_tableId_table_id_fk" FOREIGN KEY ("tableId") REFERENCES "public"."table"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "cell" ADD CONSTRAINT "cell_rowId_columnId_unique" UNIQUE("rowId","columnId");
+-- CREATE TABLE "view" (
+-- 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+-- 	"name" varchar(255) NOT NULL,
+-- 	"tableId" uuid NOT NULL
+-- );
+-- --> statement-breakpoint
+-- ALTER TABLE "view" ADD CONSTRAINT "view_tableId_table_id_fk" FOREIGN KEY ("tableId") REFERENCES "public"."table"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+-- ALTER TABLE "cell" ADD CONSTRAINT "cell_rowId_columnId_unique" UNIQUE("rowId","columnId");

@@ -1,2 +1,2 @@
-ALTER TABLE "row" ADD COLUMN "order" integer DEFAULT 0 NOT NULL;
-ALTER TABLE "column" ADD COLUMN "order" integer DEFAULT 0 NOT NULL;
+-- ALTER TABLE "row" ADD COLUMN "order" integer DEFAULT 0 NOT NULL;
+-- ALTER TABLE "column" ADD COLUMN "order" integer DEFAULT 0 NOT NULL;
