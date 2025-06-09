@@ -395,19 +395,25 @@ export const tableRouter = createTRPCRouter({
               ),
           })
         : [];
+      
+      const totalMatchingCount = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(rows)
+      .where(and(...baseConditions, ...filterConditions, ...searchConditions))
+      .then((res) => res[0]?.count ?? 0);
 
       const totalRowCount = filteredRows.length;
       const columnDefs = generateColumns(visibleColumns);
       const rowData = generateRows(filteredRows, visibleColumns, cellsForTable);
       const nextCursor = cursor + totalRowCount;
-      const hasMore = nextCursor < totalRowCount;
+      const hasMore = nextCursor < totalMatchingCount;
 
       return {
         data: rowData,
         columns: columnDefs,
         nextCursor: hasMore ? nextCursor : null,
         meta: {
-          totalRowCount,
+          totalRowCount: totalMatchingCount ,
         },
       };
     }),
