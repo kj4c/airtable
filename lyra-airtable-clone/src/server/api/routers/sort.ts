@@ -74,4 +74,16 @@ export const sortRouter = createTRPCRouter({
       await db.update(viewSorts).set(updates).where(eq(viewSorts.id, sortId));
       return { success: true };
     }),
+
+  deleteSort: protectedProcedure
+    .input(
+      z.object({
+        sortId: z.string(),
+      })
+    )
+    .mutation(async ({ input }) => {
+      const {sortId } = input;
+      await db.delete(viewSorts).where(eq(viewSorts.id, sortId));
+      return { success: true };
+    })
 });

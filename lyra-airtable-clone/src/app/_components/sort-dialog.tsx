@@ -4,7 +4,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "~/components/ui/dropdown-menu";
-import { Plus, Search, SortAsc } from "lucide-react";
+import { Plus, Search, SortAsc, Trash2 } from "lucide-react";
 import {
   Popover,
   PopoverContent,
@@ -45,6 +45,15 @@ export default function SortDialog({ tableId, viewId }: Props) {
     },
   });
 
+  const deleteSort = api.sorts.deleteSort.useMutation({
+    onSuccess: async () => {
+      await utils.sorts.getSorts.invalidate({ viewId });
+      await utils.sorts.getSorts.refetch({ viewId });
+      await utils.table.getTableData.invalidate({ viewId, limit: 100 });
+      await utils.table.getTableData.refetch({ viewId, limit: 100 });
+    },
+  });
+
   const fetchColumns = api.table.getColumns.useQuery(
     {
       tableId,
@@ -67,20 +76,22 @@ export default function SortDialog({ tableId, viewId }: Props) {
           <span>Sort</span>
         </button>
       </PopoverTrigger>
-      <PopoverContent>
+      <PopoverContent className="w-90 p-4">
         {hasSorts ? (
           <div className="flex flex-col space-y-2">
-            {fetchSorts.data.map((sort) => {
-              const column = fetchColumns.data?.find((col) => col.id === sort.columnId);
-              const isNumber = column?.type === "number";
+              {[...fetchSorts.data]
+                .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
+                .map((sort) => {
+                  const column = fetchColumns.data?.find((col) => col.id === sort.columnId);
+                  const isNumber = column?.type === "number";
 
               return (
                 <div
                   key={sort.id}
-                  className="flex items-center justify-between space-x-2"
+                  className="flex items-center justify-between space-x-1 w-full"
                 >
                   <DropdownMenu>
-                    <DropdownMenuTrigger className="w-[80%] cursor-pointer border-1 px-1 text-left text-sm hover:bg-gray-100">
+                    <DropdownMenuTrigger className="w-[60%] cursor-pointer border-1 px-1 text-left text-sm hover:bg-gray-100">
                       {sort.columnName}
                     </DropdownMenuTrigger>
                     <DropdownMenuContent>
@@ -101,7 +112,7 @@ export default function SortDialog({ tableId, viewId }: Props) {
                     </DropdownMenuContent>
                   </DropdownMenu>
                   <DropdownMenu>
-                    <DropdownMenuTrigger className="w-[20%] cursor-pointer border-1 px-1 text-left text-sm hover:bg-gray-100">
+                    <DropdownMenuTrigger className="w-[30%] cursor-pointer border-1 px-1 text-center text-sm hover:bg-gray-100">
                       {sort.direction === "asc"
                         ? isNumber
                           ? "1 → 9"
@@ -135,6 +146,13 @@ export default function SortDialog({ tableId, viewId }: Props) {
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
+                  <button
+                    onClick={() => {
+                      deleteSort.mutate({ sortId: sort.id });
+                    }}
+                  >
+                    <Trash2 className="h-[29.65px] w-8 cursor-pointer px-2 py-1 text-gray-600" />
+                  </button>
                 </div>
               );
             })}
@@ -157,6 +175,7 @@ export default function SortDialog({ tableId, viewId }: Props) {
                           viewId,
                           columnId: column.id,
                           direction: "asc",
+                          order: fetchSorts.data?.length ?? 0,
                         })
                       }
                       className="flex cursor-pointer items-center justify-between rounded px-2 py-1 hover:bg-gray-100"
