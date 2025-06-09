@@ -67,7 +67,6 @@ export function EditableCell({ cell, viewId }: EditableCellProps<RowData>) {
       }
     },
 
-    // Refetch only on success to ensure data consistency
     onSuccess: async () => {
       await utils.table.getTableData.invalidate();
     },
@@ -106,14 +105,14 @@ export function EditableCell({ cell, viewId }: EditableCellProps<RowData>) {
   return (
     <td
       className={`border-box h-10 w-[150px] cursor-pointer overflow-hidden border-r border-b px-1 py-2 text-sm text-gray-900 ${
-        isEditing ? "rounded-[6px] border-3 border-blue-500 text-blue-500" : ""
+        isEditing ? "border-1 border-blue-500 text-blue-500" : ""
       }`}
       style={{ minWidth: "150px", maxWidth: "150px" }}
       onClick={() => setIsEditing(true)}
     >
       {isEditing ? (
         <input
-          className={`h-full w-full border-0 ring-0 outline-none focus:ring-0 ${isEditing ? "text-blue-500" : "text-gray-900"} `}
+          className={`h-full w-full border ring-0 outline-none focus:ring-0 border-transparent ${isEditing ? "text-blue-500" : "text-gray-900"} `}
           value={editValue}
           type={columnType === "number" ? "number" : "text"}
           inputMode={columnType === "number" ? "numeric" : "text"}

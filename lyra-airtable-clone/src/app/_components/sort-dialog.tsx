@@ -70,63 +70,74 @@ export default function SortDialog({ tableId, viewId }: Props) {
       <PopoverContent>
         {hasSorts ? (
           <div className="flex flex-col space-y-2">
-            {fetchSorts.data.map((sort) => (
-              <div
-                key={sort.id}
-                className="flex items-center justify-between space-x-2"
-              >
-                <DropdownMenu>
-                  <DropdownMenuTrigger className="w-[80%] cursor-pointer border-1 px-1 text-left text-sm hover:bg-gray-100">
-                    {sort.columnName}
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent>
-                    {fetchColumns.data?.map((col) => (
+            {fetchSorts.data.map((sort) => {
+              const column = fetchColumns.data?.find((col) => col.id === sort.columnId);
+              const isNumber = column?.type === "number";
+
+              return (
+                <div
+                  key={sort.id}
+                  className="flex items-center justify-between space-x-2"
+                >
+                  <DropdownMenu>
+                    <DropdownMenuTrigger className="w-[80%] cursor-pointer border-1 px-1 text-left text-sm hover:bg-gray-100">
+                      {sort.columnName}
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent>
+                      {fetchColumns.data?.map((col) => (
+                        <DropdownMenuItem
+                          key={col.id}
+                          onClick={() =>
+                            updateSort.mutate({
+                              sortId: sort.id,
+                              columnId: col.id,
+                            })
+                          }
+                          className="cursor-pointer hover:bg-gray-100"
+                        >
+                          {col.name}
+                        </DropdownMenuItem>
+                      ))}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger className="w-[20%] cursor-pointer border-1 px-1 text-left text-sm hover:bg-gray-100">
+                      {sort.direction === "asc"
+                        ? isNumber
+                          ? "1 → 9"
+                          : "A → Z" 
+                        : isNumber 
+                          ? "9 → 1"
+                          : "Z → A"}  
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent>
                       <DropdownMenuItem
-                        key={col.id}
                         onClick={() =>
                           updateSort.mutate({
                             sortId: sort.id,
-                            columnId: col.id,
+                            direction: "asc",
                           })
                         }
                         className="cursor-pointer hover:bg-gray-100"
                       >
-                        {col.name}
+                        {isNumber ? "1 → 9" : "A → Z"}
                       </DropdownMenuItem>
-                    ))}
-                  </DropdownMenuContent>
-                </DropdownMenu>
-                <DropdownMenu>
-                  <DropdownMenuTrigger className="w-[20%] cursor-pointer border-1 px-1 text-left text-sm hover:bg-gray-100">
-                    {sort.direction === "asc" ? "A → Z" : "Z → A"}
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent>
-                    <DropdownMenuItem
-                      onClick={() =>
-                        updateSort.mutate({
-                          sortId: sort.id,
-                          direction: "asc",
-                        })
-                      }
-                      className="cursor-pointer hover:bg-gray-100"
-                    >
-                      A → Z
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onClick={() =>
-                        updateSort.mutate({
-                          sortId: sort.id,
-                          direction: "desc",
-                        })
-                      }
-                      className="cursor-pointer"
-                    >
-                      Z → A
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
-            ))}
+                      <DropdownMenuItem
+                        onClick={() =>
+                          updateSort.mutate({
+                            sortId: sort.id,
+                            direction: "desc",
+                          })
+                        }
+                        className="cursor-pointer"
+                      >
+                        {isNumber ? "9 → 1" : "Z → A"}
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+              );
+            })}
             <Popover>
               <PopoverTrigger asChild>
                 <div className="flex">
