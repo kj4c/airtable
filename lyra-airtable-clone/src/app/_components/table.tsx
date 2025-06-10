@@ -5,6 +5,7 @@ import {
   getCoreRowModel,
   useReactTable,
 } from "@tanstack/react-table";
+import { createPortal } from "react-dom";
 import React, { useMemo, useCallback } from "react";
 import { Button } from "../../components/ui/button";
 import { api } from "~/trpc/react";
@@ -279,7 +280,7 @@ export function DataTable({ tableId, viewId, searchQuery }: DataTableProps) {
         </thead>
         <tbody
           className="relative block divide-y divide-gray-100 bg-white"
-          style={{ height: `${rowVirtualizer.getTotalSize() + 200}px` }}
+          style={{ height: `${rowVirtualizer.getTotalSize() + 40}px` }}
         >
           {rowVirtualizer.getVirtualItems().map((virtualRow) => {
             const row = table.getRowModel().rows[virtualRow.index];
@@ -307,36 +308,50 @@ export function DataTable({ tableId, viewId, searchQuery }: DataTableProps) {
               </tr>
             );
           })}
+
           <tr
-            className="absolute w-full border-r"
+            className="absolute flex w-[190px] border-r border-b"
             style={{
               transform: `translateY(${rowVirtualizer.getTotalSize()}px)`,
             }}
           >
-            <td className="h-[40px] border-b-1">
-              <Button
-                onClick={handleCreateRow}
-                size="icon"
-                className="w-10 cursor-pointer items-center justify-center rounded-none bg-white text-black shadow-none hover:bg-gray-50 h-[40px]"
-                disabled={createRow.isPending}
-              >
-                <Plus className="text-gray-500 transition-colors" />
-              </Button>
-            </td>
-            <td colSpan={columns.length} className="border-b-1 border-r-1 text-center">
-               <div className="h-[40px] w-[150px] px-[4px] py-2">
-                  <Button
-                    className="h-2 cursor-pointer border-1 bg-white text-black hover:bg-gray-50"
-                    onClick={handleInsert1kRows}
-                    disabled={insert1kRows.isPending}
-                  >
-                    {insert1kRows.isPending ? "Adding..." : "Add 1k rows"}
-                  </Button>
-                </div>
+            <td
+              className="flex w-full items-center justify-start"
+              colSpan={columns.length}
+            >
+              <div className="flex items-center space-x-2">
+                <Button
+                  onClick={handleCreateRow}
+                  size="icon"
+                  className="w-10 cursor-pointer items-center justify-center rounded-none bg-white text-black shadow-none hover:bg-gray-50"
+                  disabled={createRow.isPending}
+                >
+                  <Plus className="text-gray-500 transition-colors" />
+                </Button>
+                <Button
+                  className="h-2 cursor-pointer border-1 bg-white text-black hover:bg-gray-50"
+                  onClick={handleInsert1kRows}
+                  disabled={insert1kRows.isPending}
+                >
+                  {insert1kRows.isPending ? "Adding..." : "Add 1k rows"}
+                </Button>
+              </div>
             </td>
           </tr>
         </tbody>
       </table>
+
+      {/* load state */}
+      {isFetching && flatData.length > 0 &&
+        createPortal(
+          <div className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none bg-white/40">
+            <div className="h-12 w-12 animate-spin rounded-full border-4 border-gray-300 border-t-black" />
+          </div>,
+          document.body
+        )
+      }
+
+
     </div>
   );
 }
