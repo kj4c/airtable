@@ -70,7 +70,20 @@ export const tableRouter = createTRPCRouter({
           order: nextOrder,
         })
         .returning();
-
+      
+      // insert cells for the new column
+      const rowsForTable = await db.query.rows.findMany({
+        where: (r, { eq }) => eq(r.tableId, tableId),
+      });
+      if (rowsForTable.length > 0 && newColumn[0]) {
+        await db.insert(cells).values(
+          rowsForTable.map((row) => ({
+            rowId: row.id,
+            columnId: newColumn[0]!.id,
+            value: "", // no val
+          })),
+        );
+      }
       return newColumn[0];
     }),
 

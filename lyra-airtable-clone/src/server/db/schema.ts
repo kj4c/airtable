@@ -176,5 +176,9 @@ export const cells = pgTable(
         .references(() => columns.id),
     };
   },
-  (t) => [unique().on(t.rowId, t.columnId)],
+  (t) => [
+    unique().on(t.rowId, t.columnId),
+    index("cell_row_idx").on(t.rowId),
+    index("cell_column_idx").on(t.columnId),
+  ],
 );
