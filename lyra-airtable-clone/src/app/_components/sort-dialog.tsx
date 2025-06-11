@@ -15,8 +15,9 @@ import { api } from "~/trpc/react";
 type Props = {
   tableId: string;
   viewId: string;
+  searchQuery: string;
 };
-export default function SortDialog({ tableId, viewId }: Props) {
+export default function SortDialog({ tableId, viewId, searchQuery }: Props) {
   const fetchSorts = api.sorts.getSorts.useQuery(
     { viewId },
     {
@@ -31,8 +32,7 @@ export default function SortDialog({ tableId, viewId }: Props) {
     onSuccess: async () => {
       await utils.sorts.getSorts.invalidate({ viewId });
       await utils.sorts.getSorts.refetch({ viewId });
-      await utils.table.getTableData.invalidate({ viewId, limit: 100 });
-      await utils.table.getTableData.refetch({ viewId, limit: 100 });
+      await utils.table.getTableData.invalidate({ viewId, limit: 100, searchQuery });
     },
   });
 
@@ -40,8 +40,7 @@ export default function SortDialog({ tableId, viewId }: Props) {
     onSuccess: async () => {
       await utils.sorts.getSorts.invalidate({ viewId });
       await utils.sorts.getSorts.refetch({ viewId });
-      await utils.table.getTableData.invalidate({ viewId, limit: 100 });
-      await utils.table.getTableData.refetch({ viewId, limit: 100 });
+      await utils.table.getTableData.invalidate({ viewId, limit: 100, searchQuery });
     },
   });
 
@@ -49,8 +48,7 @@ export default function SortDialog({ tableId, viewId }: Props) {
     onSuccess: async () => {
       await utils.sorts.getSorts.invalidate({ viewId });
       await utils.sorts.getSorts.refetch({ viewId });
-      await utils.table.getTableData.invalidate({ viewId, limit: 100 });
-      await utils.table.getTableData.refetch({ viewId, limit: 100 });
+      await utils.table.getTableData.invalidate({ viewId, limit: 100, searchQuery });
     },
   });
 

@@ -32,7 +32,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       <div className="flex flex-1">
         {/* Sidebar */}
         <aside
-          className={`border-r bg-white transition-all duration-300 ${
+          className={`border-r bg-white transition-all ${
             sidebarOpen ? "w-64" : "w-0 overflow-hidden"
           }`}
         >

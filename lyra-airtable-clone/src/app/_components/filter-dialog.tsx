@@ -15,8 +15,9 @@ import { api } from "~/trpc/react";
 type Props = {
   tableId: string;
   viewId: string;
+  searchQuery: string;
 };
-export default function FilterDialog({ tableId, viewId }: Props) {
+export default function FilterDialog({ tableId, viewId, searchQuery}: Props) {
   const fetchFilters = api.filters.getFilters.useQuery(
     { viewId },
     {
@@ -39,21 +40,21 @@ export default function FilterDialog({ tableId, viewId }: Props) {
   const createFilter = api.filters.createFilter.useMutation({
     onSuccess: async () => {
       await utils.filters.getFilters.invalidate({ viewId });
-      await utils.table.getTableData.invalidate({ viewId, limit: 100 });
+      await utils.table.getTableData.invalidate({ viewId, limit: 100, searchQuery });
     },
   });
 
   const updateFilter = api.filters.updateFilter.useMutation({
     onSuccess: async () => {
       await utils.filters.getFilters.invalidate({ viewId });
-      await utils.table.getTableData.invalidate({ viewId, limit: 100 });
+      await utils.table.getTableData.invalidate({ viewId, limit: 100, searchQuery });
     },
   });
 
   const deleteFilter = api.filters.deleteFilter.useMutation({
     onSuccess: async () => {
       await utils.filters.getFilters.invalidate({ viewId });
-      await utils.table.getTableData.invalidate({ viewId, limit: 100 });
+      await utils.table.getTableData.invalidate({ viewId, limit: 100, searchQuery });
     },
   });
 

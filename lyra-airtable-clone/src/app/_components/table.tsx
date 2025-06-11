@@ -81,7 +81,7 @@ export function DataTable({ tableId, viewId, searchQuery }: DataTableProps) {
     }
 
     return deduplicatedData;
-  }, [data?.pages, viewId]);
+  }, [data, viewId]);
 
   const totalDBRowCount = data?.pages?.[0]?.meta?.totalRowCount ?? 0;
   const totalFetched = flatData.length;
@@ -116,7 +116,7 @@ export function DataTable({ tableId, viewId, searchQuery }: DataTableProps) {
       if (containerRefElement) {
         const { scrollHeight, scrollTop, clientHeight } = containerRefElement;
         if (
-          scrollHeight - scrollTop - clientHeight < 500 &&
+          scrollHeight - scrollTop - clientHeight < (clientHeight * 2) &&
           !isFetching &&
           totalFetched < totalDBRowCount
         ) {
@@ -141,6 +141,7 @@ export function DataTable({ tableId, viewId, searchQuery }: DataTableProps) {
       await utils.table.getTableData.invalidate({
         viewId: viewId,
         limit: 100,
+        searchQuery,
       });
       await utils.table.getColumns.invalidate();
       await utils.table.getAllColumns.invalidate({
@@ -154,6 +155,7 @@ export function DataTable({ tableId, viewId, searchQuery }: DataTableProps) {
       await utils.table.getTableData.invalidate({
         viewId: viewId,
         limit: 100,
+        searchQuery,
       });
     },
   });
@@ -163,6 +165,7 @@ export function DataTable({ tableId, viewId, searchQuery }: DataTableProps) {
       await utils.table.getTableData.invalidate({
         viewId,
         limit: 100,
+        searchQuery,
       });
     },
   });
@@ -303,6 +306,7 @@ export function DataTable({ tableId, viewId, searchQuery }: DataTableProps) {
                     cell={cell}
                     tableId={tableId}
                     viewId={viewId}
+                    searchQuery={searchQuery}
                   />
                 ))}
               </tr>
@@ -340,18 +344,6 @@ export function DataTable({ tableId, viewId, searchQuery }: DataTableProps) {
           </tr>
         </tbody>
       </table>
-
-      {/* load state */}
-      {isFetching && flatData.length > 0 &&
-        createPortal(
-          <div className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none bg-white/40">
-            <div className="h-12 w-12 animate-spin rounded-full border-4 border-gray-300 border-t-black" />
-          </div>,
-          document.body
-        )
-      }
-
-
     </div>
   );
 }

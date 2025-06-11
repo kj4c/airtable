@@ -8,9 +8,10 @@ type EditableCellProps<TData> = {
   cell: Cell<TData, unknown>;
   tableId: string;
   viewId: string;
+  searchQuery: string;
 };
 
-export function EditableCell({ cell, viewId }: EditableCellProps<RowData>) {
+export function EditableCell({ cell, viewId, searchQuery }: EditableCellProps<RowData>) {
   const [isEditing, setIsEditing] = useState(false);
   const [editValue, setEditValue] = useState("");
 
@@ -25,32 +26,30 @@ export function EditableCell({ cell, viewId }: EditableCellProps<RowData>) {
       const previous = utils.table.getTableData.getInfiniteData({
         viewId,
         limit: 100,
+        searchQuery,
       });
 
+      if (!previous) return { previous };
+
       utils.table.getTableData.setInfiniteData(
-        { viewId, limit: 100 },
+        { viewId, limit: 100, searchQuery },
         (oldData) => {
           if (!oldData) return oldData;
 
-          const updatedPages = oldData.pages.map((page) => {
-            const updatedData = page.data.map((row) => {
-              // Only update if we haven't updated this row yet and it matches
+            const updatedPages = oldData.pages.map((page) => ({
+            ...page,
+            data: page.data.map((row) => {
               if (row.id === newCell.rowId) {
-                return { ...row, [newCell.columnId]: newCell.value };
+                return {
+                  ...row,
+                  [newCell.columnId]: newCell.value,
+                };
               }
               return row;
-            });
+            }),
+          }));
 
-            return {
-              ...page,
-              data: updatedData,
-            };
-          });
-
-          return {
-            ...oldData,
-            pages: updatedPages,
-          };
+          return { ...oldData, pages: updatedPages };
         },
       );
 
@@ -67,8 +66,8 @@ export function EditableCell({ cell, viewId }: EditableCellProps<RowData>) {
       }
     },
 
-    onSuccess: async () => {
-      await utils.table.getTableData.invalidate();
+    onSettled: async () => {
+      void utils.table.getTableData.invalidate({ viewId, limit: 100, searchQuery });
     },
   });
 
@@ -86,8 +85,9 @@ export function EditableCell({ cell, viewId }: EditableCellProps<RowData>) {
   }, [isEditing, stringValue]);
 
   const handleSave = () => {
-    // Only save if value has actually changed
     if (editValue !== stringValue) {
+      console.log("Saving new value:", editValue);
+      console.log(cell.row.original);
       insertCell.mutate({
         rowId: cell.row.original.id,
         columnId: cell.column.id,
@@ -130,7 +130,7 @@ export function EditableCell({ cell, viewId }: EditableCellProps<RowData>) {
         />
       ) : (
         <div className="w-full truncate overflow-hidden text-ellipsis whitespace-nowrap">
-          {flexRender(cell.column.columnDef.cell, cell.getContext())}
+          {cell.getValue() as string}
         </div>
       )}
     </td>

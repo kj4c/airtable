@@ -45,7 +45,7 @@ const TableToolbar = ({
       <HideDialog tableId={tableId} viewId={viewId} searchQuery={searchQuery}/>
 
       {/* Filter */}
-      <FilterDialog tableId={tableId} viewId={viewId} />
+      <FilterDialog tableId={tableId} viewId={viewId} searchQuery={searchQuery} />
 
       {/* Group */}
       <button className="flex items-center space-x-1 rounded px-2 py-1 hover:bg-gray-100">
@@ -54,7 +54,7 @@ const TableToolbar = ({
       </button>
 
       {/* Sort */}
-      <SortDialog tableId={tableId} viewId={viewId} />
+      <SortDialog tableId={tableId} viewId={viewId} searchQuery={searchQuery}/>
 
       {/* Color */}
       <button className="flex items-center space-x-1 rounded px-2 py-1 hover:bg-gray-100">

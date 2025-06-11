@@ -36,9 +36,11 @@ export function AuthButton() {
           <AvatarFallback>{session.user?.name?.[0] ?? "?"}</AvatarFallback>
         </Avatar>
       </DropdownMenuTrigger>
-      <DropdownMenuContent className="w-48">
+      <DropdownMenuContent>
         <DropdownMenuItem disabled>{session.user?.email}</DropdownMenuItem>
-        <DropdownMenuItem onClick={() => signOut({ callbackUrl: "/" })}>
+        <DropdownMenuItem 
+          className="cursor-pointer"
+          onClick={() => signOut({ callbackUrl: "/" })}>
           Sign out
         </DropdownMenuItem>
       </DropdownMenuContent>

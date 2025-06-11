@@ -118,9 +118,7 @@ export default function BasePage() {
             <Button className="cursor-pointer" onClick={handleCreateBase}>
               Create
             </Button>
-            <p className="mt-2 flex justify-center text-sm text-red-500">
-              {error}
-            </p>
+
           </DialogContent>
         </Dialog>
       </div>
