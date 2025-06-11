@@ -36,14 +36,9 @@ export default function BaseDashboard() {
     },
   });
 
-  const insertColumn = api.table.createColumn.useMutation({
-    onSuccess: async () => {
-      await utils.table.getColumns.invalidate();
-      await utils.table.getAllColumns.invalidate({
-        tableId: selectedTableId ?? "",
-      });
-    },
-  });
+  const insertColumn = api.table.createColumn.useMutation();
+
+  const insertRow = api.table.createRow.useMutation();
 
   const handleCreate = async () => {
     const newTable = await createTable.mutateAsync({
@@ -52,12 +47,27 @@ export default function BaseDashboard() {
     });
 
     if (newTable?.id) {
-      setSelectedTableId(newTable.id);
+      await Promise.all([
+        insertColumn.mutateAsync({ name: "Name", type: "text", tableId: newTable.id }),
+        insertColumn.mutateAsync({ name: "Notes", type: "text", tableId: newTable.id }),
+        insertColumn.mutateAsync({ name: "Number", type: "number", tableId: newTable.id }),
+      ]);
 
-      await insertColumn.mutateAsync({
-        name: `Name`,
-        type: "text",
-        tableId: newTable.id,
+      await Promise.all(
+        Array.from({ length: 3 }).map(() =>
+          insertRow.mutateAsync({
+            tableId: newTable.id,
+            valueWanted: true,
+          })
+        )
+      );
+
+      await utils.table.getColumns.invalidate();
+      await utils.table.getAllColumns.invalidate({ tableId: newTable.id });
+      await utils.table.getTableData.invalidate({
+        viewId: selectedViewId ?? "",
+        limit: 100,
+        searchQuery: debouncedSearchQuery,
       });
     }
   };
@@ -80,7 +90,6 @@ export default function BaseDashboard() {
   const handleTableChange = (tableId: string) => {
     setSelectedTableId(tableId);
     // the first one
-    console.log("Selected table ID:", tableId);
   };
 
   useEffect(() => {

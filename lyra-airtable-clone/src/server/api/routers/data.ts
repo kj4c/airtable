@@ -12,8 +12,6 @@ type DBColumn = {
 
 type DBRow = {
   id: string;
-  order: number;
-  tableId: string;
 };
 
 type DBCell = {
@@ -55,7 +53,6 @@ export function generateColumns(columns: DBColumn[]): ColumnWithMeta[] {
 // need to cache, pass the useQuery data to the table
 export function generateRows(
   rows: DBRow[],
-  cols: DBColumn[],
   cells: DBCell[],
 ): RowData[] {
   const cellMap = new Map<string, DBCell[]>();

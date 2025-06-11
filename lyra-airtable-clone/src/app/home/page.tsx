@@ -72,9 +72,22 @@ export default function BasePage() {
           type: "text",
         });
 
+        await createColumn.mutateAsync({
+          tableId: table.id,
+          name: "Notes",
+          type: "text",
+        });
+
+        await createColumn.mutateAsync({
+          tableId: table.id,
+          name: "Number",
+          type: "number",
+        });
+
         for (let i = 0; i < 3; i++) {
           await createRow.mutateAsync({
             tableId: table.id,
+            valueWanted: true
           });
         }
       }

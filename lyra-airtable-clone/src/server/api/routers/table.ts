@@ -91,10 +91,11 @@ export const tableRouter = createTRPCRouter({
     .input(
       z.object({
         tableId: z.string(),
+        valueWanted: z.boolean().optional(),
       }),
     )
     .mutation(async ({ input }) => {
-      const { tableId } = input;
+      const { tableId, valueWanted } = input;
       // values should match the schema of the table
       // get the max order for the table
       const existing = await db.query.rows.findMany({
@@ -124,17 +125,30 @@ export const tableRouter = createTRPCRouter({
       }
 
       if (tableColumns.length > 0) {
-        await db.insert(cells).values(
-          tableColumns.map((col) => ({
+        const cellsToInsert = tableColumns.map((col) => {
+          let value =  ""; // no val
+
+          if (valueWanted) {
+            if (col.type === "text") {
+              value = faker.lorem.words(2);
+            } else if (col.type === "number") {
+              value = faker.number.int({ min: 0, max: 1000 }).toString();
+            }
+          }
+
+          return {
             rowId: newRow.id,
             columnId: col.id,
-            value: "", // no val
-          })),
-        );
+            value,
+          };
+        });
+
+        await db.insert(cells).values(cellsToInsert);
       }
 
       return newRow;
     }),
+  
 
   insertCell: protectedProcedure
     .input(
@@ -363,7 +377,11 @@ export const tableRouter = createTRPCRouter({
 
                 const cellValueSql = isNumeric
                   ? sql`(
-                  SELECT CAST(${cells.value} AS INTEGER)
+                  SELECT CASE
+                    WHEN ${cells.value} IS NOT NULL AND TRIM(${cells.value}) != ''
+                    THEN CAST(${cells.value} AS INTEGER)
+                    ELSE NULL
+                  END
                   FROM ${cells}
                   WHERE ${cells.rowId} = ${rows.id}
                     AND ${cells.columnId} = ${s.columnId}
@@ -376,28 +394,31 @@ export const tableRouter = createTRPCRouter({
                     AND ${cells.columnId} = ${s.columnId}
                   LIMIT 1
                 )`;
+
+                const isEmptyCheck = sql`(
+                  SELECT ${cells.value} IS NULL OR ${cells.value} = ''
+                  FROM ${cells}
+                  WHERE ${cells.rowId} = ${rows.id}
+                    AND ${cells.columnId} = ${s.columnId}
+                  LIMIT 1
+                )`;
                 return s.direction === "asc"
-                  ? asc(cellValueSql)
-                  : desc(cellValueSql);
+                  ? [asc(isEmptyCheck), asc(cellValueSql)]
+                  : [asc(isEmptyCheck), desc(cellValueSql)];
               })
+              .flat()
           : [asc(rows.order)];
 
-      const filteredRows = await db
-        .select({
-          id: rows.id,
-          order: rows.order,
-          tableId: rows.tableId,
-        })
+      const paginatedRowIds = await db
+        .select({ id: rows.id })
         .from(rows)
-        .leftJoin(cells, eq(cells.rowId, rows.id))
         .where(and(...baseConditions, ...filterConditions, ...searchConditions))
         .orderBy(...sortConditions)
         .offset(cursor)
         .limit(limit);
 
-      console.log("Filtered Rows:", filteredRows);
+      const rowIds = paginatedRowIds.map((r) => r.id);
 
-      const rowIds = filteredRows.map((r) => r.id);
       const cellsForTable = rowIds.length
         ? await db.query.cells.findMany({
             // rowsId is a table of row ids find any cell within this row
@@ -415,9 +436,9 @@ export const tableRouter = createTRPCRouter({
       .where(and(...baseConditions, ...filterConditions, ...searchConditions))
       .then((res) => res[0]?.count ?? 0);
 
-      const totalRowCount = filteredRows.length;
+      const totalRowCount = paginatedRowIds.length;
       const columnDefs = generateColumns(visibleColumns);
-      const rowData = generateRows(filteredRows, visibleColumns, cellsForTable);
+      const rowData = generateRows(paginatedRowIds, cellsForTable);
       const nextCursor = cursor + totalRowCount;
       const hasMore = nextCursor < totalMatchingCount;
 
