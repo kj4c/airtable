@@ -1,6 +1,6 @@
 "use client";
 import { api } from "~/trpc/react";
-import { flexRender, type Cell } from "@tanstack/react-table";
+import { type Cell } from "@tanstack/react-table";
 import React, { useEffect, useState } from "react";
 import type { ColumnMeta, RowData } from "types.tsx";
 
