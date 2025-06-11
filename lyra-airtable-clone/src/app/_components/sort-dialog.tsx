@@ -32,7 +32,11 @@ export default function SortDialog({ tableId, viewId, searchQuery }: Props) {
     onSuccess: async () => {
       await utils.sorts.getSorts.invalidate({ viewId });
       await utils.sorts.getSorts.refetch({ viewId });
-      await utils.table.getTableData.invalidate({ viewId, limit: 100, searchQuery });
+      await utils.table.getTableData.invalidate({
+        viewId,
+        limit: 100,
+        searchQuery,
+      });
     },
   });
 
@@ -40,7 +44,11 @@ export default function SortDialog({ tableId, viewId, searchQuery }: Props) {
     onSuccess: async () => {
       await utils.sorts.getSorts.invalidate({ viewId });
       await utils.sorts.getSorts.refetch({ viewId });
-      await utils.table.getTableData.invalidate({ viewId, limit: 100, searchQuery });
+      await utils.table.getTableData.invalidate({
+        viewId,
+        limit: 100,
+        searchQuery,
+      });
     },
   });
 
@@ -48,7 +56,11 @@ export default function SortDialog({ tableId, viewId, searchQuery }: Props) {
     onSuccess: async () => {
       await utils.sorts.getSorts.invalidate({ viewId });
       await utils.sorts.getSorts.refetch({ viewId });
-      await utils.table.getTableData.invalidate({ viewId, limit: 100, searchQuery });
+      await utils.table.getTableData.invalidate({
+        viewId,
+        limit: 100,
+        searchQuery,
+      });
     },
   });
 
@@ -77,83 +89,85 @@ export default function SortDialog({ tableId, viewId, searchQuery }: Props) {
       <PopoverContent className="w-90 p-4">
         {hasSorts ? (
           <div className="flex flex-col space-y-2">
-              {[...fetchSorts.data]
-                .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
-                .map((sort) => {
-                  const column = fetchColumns.data?.find((col) => col.id === sort.columnId);
-                  const isNumber = column?.type === "number";
+            {[...fetchSorts.data]
+              .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
+              .map((sort) => {
+                const column = fetchColumns.data?.find(
+                  (col) => col.id === sort.columnId,
+                );
+                const isNumber = column?.type === "number";
 
-              return (
-                <div
-                  key={sort.id}
-                  className="flex items-center justify-between space-x-1 w-full"
-                >
-                  <DropdownMenu>
-                    <DropdownMenuTrigger className="w-[60%] cursor-pointer border-1 px-1 text-left text-sm hover:bg-gray-100">
-                      {sort.columnName}
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent>
-                      {fetchColumns.data?.map((col) => (
+                return (
+                  <div
+                    key={sort.id}
+                    className="flex w-full items-center justify-between space-x-1"
+                  >
+                    <DropdownMenu>
+                      <DropdownMenuTrigger className="w-[60%] cursor-pointer border-1 px-1 text-left text-sm hover:bg-gray-100">
+                        {sort.columnName}
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent>
+                        {fetchColumns.data?.map((col) => (
+                          <DropdownMenuItem
+                            key={col.id}
+                            onClick={() =>
+                              updateSort.mutate({
+                                sortId: sort.id,
+                                columnId: col.id,
+                              })
+                            }
+                            className="cursor-pointer hover:bg-gray-100"
+                          >
+                            {col.name}
+                          </DropdownMenuItem>
+                        ))}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger className="w-[30%] cursor-pointer border-1 px-1 text-center text-sm hover:bg-gray-100">
+                        {sort.direction === "asc"
+                          ? isNumber
+                            ? "1 → 9"
+                            : "A → Z"
+                          : isNumber
+                            ? "9 → 1"
+                            : "Z → A"}
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent>
                         <DropdownMenuItem
-                          key={col.id}
                           onClick={() =>
                             updateSort.mutate({
                               sortId: sort.id,
-                              columnId: col.id,
+                              direction: "asc",
                             })
                           }
                           className="cursor-pointer hover:bg-gray-100"
                         >
-                          {col.name}
+                          {isNumber ? "1 → 9" : "A → Z"}
                         </DropdownMenuItem>
-                      ))}
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger className="w-[30%] cursor-pointer border-1 px-1 text-center text-sm hover:bg-gray-100">
-                      {sort.direction === "asc"
-                        ? isNumber
-                          ? "1 → 9"
-                          : "A → Z" 
-                        : isNumber 
-                          ? "9 → 1"
-                          : "Z → A"}  
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent>
-                      <DropdownMenuItem
-                        onClick={() =>
-                          updateSort.mutate({
-                            sortId: sort.id,
-                            direction: "asc",
-                          })
-                        }
-                        className="cursor-pointer hover:bg-gray-100"
-                      >
-                        {isNumber ? "1 → 9" : "A → Z"}
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        onClick={() =>
-                          updateSort.mutate({
-                            sortId: sort.id,
-                            direction: "desc",
-                          })
-                        }
-                        className="cursor-pointer"
-                      >
-                        {isNumber ? "9 → 1" : "Z → A"}
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                  <button
-                    onClick={() => {
-                      deleteSort.mutate({ sortId: sort.id });
-                    }}
-                  >
-                    <Trash2 className="h-[29.65px] w-8 cursor-pointer px-2 py-1 text-gray-600" />
-                  </button>
-                </div>
-              );
-            })}
+                        <DropdownMenuItem
+                          onClick={() =>
+                            updateSort.mutate({
+                              sortId: sort.id,
+                              direction: "desc",
+                            })
+                          }
+                          className="cursor-pointer"
+                        >
+                          {isNumber ? "9 → 1" : "Z → A"}
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                    <button
+                      onClick={() => {
+                        deleteSort.mutate({ sortId: sort.id });
+                      }}
+                    >
+                      <Trash2 className="h-[29.65px] w-8 cursor-pointer px-2 py-1 text-gray-600" />
+                    </button>
+                  </div>
+                );
+              })}
             <Popover>
               <PopoverTrigger asChild>
                 <div className="flex">

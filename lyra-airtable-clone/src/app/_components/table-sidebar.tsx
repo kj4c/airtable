@@ -70,7 +70,7 @@ export default function ViewSidebar({
             onClick={() => {
               onViewChange(view.id);
             }}
-            className={`flex w-full items-center rounded px-2 py-1 text-left ${
+            className={`flex w-full cursor-pointer items-center rounded px-2 py-1 text-left ${
               selectedViewId === view.id
                 ? "bg-blue-100 text-blue-600"
                 : "hover:bg-gray-100"

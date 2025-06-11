@@ -28,7 +28,7 @@ export default function HideDialog({ tableId, viewId, searchQuery }: Props) {
 
   const fetchHiddenColumns = api.table.getHiddenColumns.useQuery(
     {
-      viewId
+      viewId,
     },
     {
       enabled: !!viewId,
@@ -38,10 +38,14 @@ export default function HideDialog({ tableId, viewId, searchQuery }: Props) {
   );
 
   const hideColumn = api.filters.hideColumn.useMutation({
-  onSuccess: async () => {
+    onSuccess: async () => {
       await utils.table.getHiddenColumns.invalidate({ viewId });
       await utils.table.getColumns.invalidate({ tableId, viewId });
-      await utils.table.getTableData.invalidate({ viewId, limit: 100, searchQuery });
+      await utils.table.getTableData.invalidate({
+        viewId,
+        limit: 100,
+        searchQuery,
+      });
     },
   });
 
@@ -49,7 +53,11 @@ export default function HideDialog({ tableId, viewId, searchQuery }: Props) {
     onSuccess: async () => {
       await utils.table.getHiddenColumns.invalidate({ viewId });
       await utils.table.getColumns.invalidate({ tableId, viewId });
-      await utils.table.getTableData.invalidate({ viewId, limit: 100, searchQuery });
+      await utils.table.getTableData.invalidate({
+        viewId,
+        limit: 100,
+        searchQuery,
+      });
     },
   });
 
@@ -57,37 +65,36 @@ export default function HideDialog({ tableId, viewId, searchQuery }: Props) {
     <Popover>
       <PopoverTrigger className="cursor-pointer" asChild>
         <button className="flex items-center space-x-1 rounded px-2 py-1 hover:bg-gray-100">
-					<EyeOff className="h-4 w-4" />
-					<span>Hide fields</span>
+          <EyeOff className="h-4 w-4" />
+          <span>Hide fields</span>
         </button>
       </PopoverTrigger>
       <PopoverContent>
         <div className="flex flex-col space-y-2">
-					<div className="flex justify-between mb-2 text-xs text-gray-500 border-b-2 py-3">
-						<p>Find a field</p>
-						ⓘ
-					</div>
-					<div className="flex flex-col space-y-2">
-							{fetchColumns.data?.map((column) => (
-								<div
-									key={column.id}
-									className="flex cursor-pointer items-center space-x-5 rounded py-1 px-2 hover:bg-gray-100"
-									onClick={() => {
-                    if (fetchHiddenColumns.data?.includes(column.id)) {
-                      unhideColumn.mutate({ columnId: column.id, viewId });
-                    } else {
-                      hideColumn.mutate({ columnId: column.id, viewId });
-                    }
-									}}
-								>
-                  <Switch
-                    checked={!fetchHiddenColumns.data?.includes(column.id)}
-                    className="h-2 w-7 text-gray-400 pointer-events-none" // <-- key fix
-                  />
-									<span>{column.name}</span>
-								</div>
-							))}
-					</div>
+          <div className="mb-2 flex justify-between border-b-2 py-3 text-xs text-gray-500">
+            <p>Find a field</p>ⓘ
+          </div>
+          <div className="flex flex-col space-y-2">
+            {fetchColumns.data?.map((column) => (
+              <div
+                key={column.id}
+                className="flex cursor-pointer items-center space-x-5 rounded px-2 py-1 hover:bg-gray-100"
+                onClick={() => {
+                  if (fetchHiddenColumns.data?.includes(column.id)) {
+                    unhideColumn.mutate({ columnId: column.id, viewId });
+                  } else {
+                    hideColumn.mutate({ columnId: column.id, viewId });
+                  }
+                }}
+              >
+                <Switch
+                  checked={!fetchHiddenColumns.data?.includes(column.id)}
+                  className="pointer-events-none h-2 w-7 text-gray-400" // <-- key fix
+                />
+                <span>{column.name}</span>
+              </div>
+            ))}
+          </div>
         </div>
       </PopoverContent>
     </Popover>

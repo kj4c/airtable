@@ -207,7 +207,7 @@ export function DataTable({ tableId, viewId, searchQuery }: DataTableProps) {
       <table
         /* forces table to rerender whenever sort is added or view is changed! */
         key={tableResetKey}
-        className="box-border w-max min-w-fit table-fixed border-separate border-spacing-0 divide-y divide-gray-200"
+        className="box-border w-max min-w-fit table-fixed border-separate border-spacing-0 divide-y divide-gray-200 pb-32"
       >
         <thead className="sticky top-0 z-10 bg-gray-50">
           {table.getHeaderGroups().map((headerGroup) => (

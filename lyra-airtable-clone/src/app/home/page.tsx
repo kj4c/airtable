@@ -64,34 +64,37 @@ export default function BasePage() {
         name: "Table 1",
       });
 
+      const defaultColumns = [
+        { name: "Name", type: "text" },
+        { name: "Notes", type: "text" },
+        { name: "Number", type: "number" },
+      ];
       // default column for the table
       if (table?.id) {
-        await createColumn.mutateAsync({
-          tableId: table.id,
-          name: "Name",
-          type: "text",
-        });
+        await Promise.all(
+          defaultColumns.map((col) =>
+            createColumn.mutateAsync({
+              tableId: table.id,
+              name: col.name,
+              type: col.type as "text" | "number",
+            }),
+          ),
+        );
 
-        await createColumn.mutateAsync({
-          tableId: table.id,
-          name: "Notes",
-          type: "text",
-        });
+        await Promise.all(
+          Array.from({ length: 3 }).map(() =>
+            createRow.mutateAsync({
+              tableId: table.id,
+              valueWanted: true,
+            }),
+          ),
+        );
 
-        await createColumn.mutateAsync({
-          tableId: table.id,
-          name: "Number",
-          type: "number",
-        });
-
-        for (let i = 0; i < 3; i++) {
-          await createRow.mutateAsync({
-            tableId: table.id,
-            valueWanted: true
-          });
-        }
+        await utils.table.getColumns.invalidate();
+        await utils.table.getTableData.invalidate();
       }
     }
+
     setOpen(false);
   };
 
@@ -131,7 +134,6 @@ export default function BasePage() {
             <Button className="cursor-pointer" onClick={handleCreateBase}>
               Create
             </Button>
-
           </DialogContent>
         </Dialog>
       </div>

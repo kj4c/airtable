@@ -51,10 +51,7 @@ export function generateColumns(columns: DBColumn[]): ColumnWithMeta[] {
 }
 
 // need to cache, pass the useQuery data to the table
-export function generateRows(
-  rows: DBRow[],
-  cells: DBCell[],
-): RowData[] {
+export function generateRows(rows: DBRow[], cells: DBCell[]): RowData[] {
   const cellMap = new Map<string, DBCell[]>();
 
   for (const cell of cells) {

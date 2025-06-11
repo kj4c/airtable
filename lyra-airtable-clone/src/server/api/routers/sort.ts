@@ -79,11 +79,11 @@ export const sortRouter = createTRPCRouter({
     .input(
       z.object({
         sortId: z.string(),
-      })
+      }),
     )
     .mutation(async ({ input }) => {
-      const {sortId } = input;
+      const { sortId } = input;
       await db.delete(viewSorts).where(eq(viewSorts.id, sortId));
       return { success: true };
-    })
+    }),
 });

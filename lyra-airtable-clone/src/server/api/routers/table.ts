@@ -70,7 +70,7 @@ export const tableRouter = createTRPCRouter({
           order: nextOrder,
         })
         .returning();
-      
+
       // insert cells for the new column
       const rowsForTable = await db.query.rows.findMany({
         where: (r, { eq }) => eq(r.tableId, tableId),
@@ -126,7 +126,7 @@ export const tableRouter = createTRPCRouter({
 
       if (tableColumns.length > 0) {
         const cellsToInsert = tableColumns.map((col) => {
-          let value =  ""; // no val
+          let value = ""; // no val
 
           if (valueWanted) {
             if (col.type === "text") {
@@ -148,7 +148,6 @@ export const tableRouter = createTRPCRouter({
 
       return newRow;
     }),
-  
 
   insertCell: protectedProcedure
     .input(
@@ -232,7 +231,7 @@ export const tableRouter = createTRPCRouter({
       });
 
       return columns;
-  }),
+    }),
   // returns all the visible columns for a table
   getColumns: protectedProcedure
     .input(
@@ -247,7 +246,7 @@ export const tableRouter = createTRPCRouter({
       const columnsData = await getColumnsForTable(tableId, input.viewId);
       return columnsData;
     }),
-  
+
   getHiddenColumns: protectedProcedure
     .input(
       z.object({
@@ -255,7 +254,7 @@ export const tableRouter = createTRPCRouter({
       }),
     )
     .query(async ({ input }) => {
-      const { viewId } = input; 
+      const { viewId } = input;
       const hiddenColumns = await db.query.viewHiddenColumns.findMany({
         where: (h, { eq }) => eq(h.viewId, viewId),
       });
@@ -429,12 +428,12 @@ export const tableRouter = createTRPCRouter({
               ),
           })
         : [];
-      
+
       const totalMatchingCount = await db
-      .select({ count: sql<number>`count(*)` })
-      .from(rows)
-      .where(and(...baseConditions, ...filterConditions, ...searchConditions))
-      .then((res) => res[0]?.count ?? 0);
+        .select({ count: sql<number>`count(*)` })
+        .from(rows)
+        .where(and(...baseConditions, ...filterConditions, ...searchConditions))
+        .then((res) => res[0]?.count ?? 0);
 
       const totalRowCount = paginatedRowIds.length;
       const columnDefs = generateColumns(visibleColumns);
@@ -447,7 +446,7 @@ export const tableRouter = createTRPCRouter({
         columns: columnDefs,
         nextCursor: hasMore ? nextCursor : null,
         meta: {
-          totalRowCount: totalMatchingCount ,
+          totalRowCount: totalMatchingCount,
         },
       };
     }),

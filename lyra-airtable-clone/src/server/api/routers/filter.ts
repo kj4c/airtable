@@ -139,14 +139,12 @@ export const filterRouter = createTRPCRouter({
     .mutation(async ({ input }) => {
       const { viewId, columnId } = input;
 
-      await db
-        .insert(viewHiddenColumns)
-        .values({
-          viewId,
-          columnId,
+      await db.insert(viewHiddenColumns).values({
+        viewId,
+        columnId,
       });
-  }),
-  
+    }),
+
   unhideColumn: protectedProcedure
     .input(
       z.object({
@@ -161,9 +159,9 @@ export const filterRouter = createTRPCRouter({
         .delete(viewHiddenColumns)
         .where(
           and(
-          eq(viewHiddenColumns.viewId, viewId),
+            eq(viewHiddenColumns.viewId, viewId),
             eq(viewHiddenColumns.columnId, columnId),
           ),
-      );
-    })
+        );
+    }),
 });

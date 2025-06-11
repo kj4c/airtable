@@ -11,7 +11,11 @@ type EditableCellProps<TData> = {
   searchQuery: string;
 };
 
-export function EditableCell({ cell, viewId, searchQuery }: EditableCellProps<RowData>) {
+export function EditableCell({
+  cell,
+  viewId,
+  searchQuery,
+}: EditableCellProps<RowData>) {
   const [isEditing, setIsEditing] = useState(false);
   const [editValue, setEditValue] = useState("");
 
@@ -36,7 +40,7 @@ export function EditableCell({ cell, viewId, searchQuery }: EditableCellProps<Ro
         (oldData) => {
           if (!oldData) return oldData;
 
-            const updatedPages = oldData.pages.map((page) => ({
+          const updatedPages = oldData.pages.map((page) => ({
             ...page,
             data: page.data.map((row) => {
               if (row.id === newCell.rowId) {
@@ -67,7 +71,11 @@ export function EditableCell({ cell, viewId, searchQuery }: EditableCellProps<Ro
     },
 
     onSettled: async () => {
-      void utils.table.getTableData.invalidate({ viewId, limit: 100, searchQuery });
+      void utils.table.getTableData.invalidate({
+        viewId,
+        limit: 100,
+        searchQuery,
+      });
     },
   });
 
@@ -106,7 +114,7 @@ export function EditableCell({ cell, viewId, searchQuery }: EditableCellProps<Ro
     <td
       tabIndex={0}
       onKeyDown={(e) => {
-        if (e.key === "Enter") setIsEditing (true);
+        if (e.key === "Enter") setIsEditing(true);
       }}
       className={`border-box h-10 w-[150px] cursor-pointer overflow-hidden border-r border-b px-1 py-2 text-sm text-gray-900 ${
         isEditing ? "border-1 border-blue-500 text-blue-500" : ""
@@ -116,7 +124,7 @@ export function EditableCell({ cell, viewId, searchQuery }: EditableCellProps<Ro
     >
       {isEditing ? (
         <input
-          className={`h-full w-full border ring-0 outline-none focus:ring-0 border-transparent ${isEditing ? "text-blue-500" : "text-gray-900"} `}
+          className={`h-full w-full border border-transparent ring-0 outline-none focus:ring-0 ${isEditing ? "text-blue-500" : "text-gray-900"} `}
           value={editValue}
           type={columnType === "number" ? "number" : "text"}
           inputMode={columnType === "number" ? "numeric" : "text"}

@@ -48,9 +48,21 @@ export default function BaseDashboard() {
 
     if (newTable?.id) {
       await Promise.all([
-        insertColumn.mutateAsync({ name: "Name", type: "text", tableId: newTable.id }),
-        insertColumn.mutateAsync({ name: "Notes", type: "text", tableId: newTable.id }),
-        insertColumn.mutateAsync({ name: "Number", type: "number", tableId: newTable.id }),
+        insertColumn.mutateAsync({
+          name: "Name",
+          type: "text",
+          tableId: newTable.id,
+        }),
+        insertColumn.mutateAsync({
+          name: "Notes",
+          type: "text",
+          tableId: newTable.id,
+        }),
+        insertColumn.mutateAsync({
+          name: "Number",
+          type: "number",
+          tableId: newTable.id,
+        }),
       ]);
 
       await Promise.all(
@@ -58,8 +70,8 @@ export default function BaseDashboard() {
           insertRow.mutateAsync({
             tableId: newTable.id,
             valueWanted: true,
-          })
-        )
+          }),
+        ),
       );
 
       await utils.table.getColumns.invalidate();
