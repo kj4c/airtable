@@ -12,6 +12,7 @@ import SortDialog from "~/app/_components/sort-dialog";
 import FilterDialog from "./filter-dialog";
 import Search from "./search";
 import HideDialog from "./hide-dialog";
+import { api } from "~/trpc/react";
 
 type Props = {
   tableId: string;
@@ -25,8 +26,10 @@ const TableToolbar = ({
   searchQuery,
   setSearchQuery,
 }: Props) => {
+  const viewName = api.table.getViewName.useQuery({ viewId });
+
   return (
-    <div className="flex items-center space-x-4 border-b border-gray-200 bg-white px-3 py-1 text-sm text-gray-700">
+    <div className="flex items-center space-x-4 border-b border-gray-200 bg-white px-3 py-1 text-xs text-gray-700">
       <button className="flex items-center space-x-1 rounded px-2 py-1 hover:bg-gray-100">
         <LayoutList className="h-4 w-4" />
         <span>Views</span>
@@ -36,7 +39,9 @@ const TableToolbar = ({
 
       <button className="flex items-center space-x-1 rounded px-2 py-1 hover:bg-gray-100">
         <Table className="h-4 w-4 text-blue-600" />
-        <span className="text-blue-600">Grid view</span>
+        <span className="text-blue-600">
+          {viewName.data ? viewName.data : "Loading..."}
+        </span>
         <ChevronDown className="h-4 w-4 text-gray-500" />
         <Users className="ml-1 h-4 w-4 text-gray-500" />
       </button>

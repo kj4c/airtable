@@ -116,7 +116,7 @@ export function DataTable({ tableId, viewId, searchQuery }: DataTableProps) {
       if (containerRefElement) {
         const { scrollHeight, scrollTop, clientHeight } = containerRefElement;
         if (
-          scrollHeight - scrollTop - clientHeight < (clientHeight * 2) &&
+          scrollHeight - scrollTop - clientHeight < clientHeight * 2 &&
           !isFetching &&
           totalFetched < totalDBRowCount
         ) {
@@ -294,7 +294,7 @@ export function DataTable({ tableId, viewId, searchQuery }: DataTableProps) {
                 data-index={virtualRow.index}
                 key={row.id}
                 ref={(node) => rowVirtualizer.measureElement(node)}
-                className="absolute flex w-full border-b"
+                className="absolute flex w-full border-0 hover:bg-gray-50"
                 style={{ transform: `translateY(${virtualRow.start}px)` }}
               >
                 <td className="flex h-10 max-w-[40px] min-w-[40px] items-center justify-center border-b-1 text-sm text-gray-900">

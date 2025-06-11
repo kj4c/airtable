@@ -145,7 +145,7 @@ export default function BaseDashboard() {
               </button>
             ))}
             <Button
-              className="ml-2 cursor-pointer bg-transparent text-sm text-gray-200 hover:bg-transparent hover:text-white"
+              className="ml-2 cursor-pointer bg-transparent pt-3 text-sm text-gray-200 hover:bg-transparent hover:text-white"
               onClick={() => handleCreate()}
             >
               + Add or import

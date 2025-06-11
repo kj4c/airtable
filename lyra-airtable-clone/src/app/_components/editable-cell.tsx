@@ -113,10 +113,11 @@ export function EditableCell({
   return (
     <td
       tabIndex={0}
+      onFocus={() => setIsEditing(true)}
       onKeyDown={(e) => {
         if (e.key === "Enter") setIsEditing(true);
       }}
-      className={`border-box h-10 w-[150px] cursor-pointer overflow-hidden border-r border-b px-1 py-2 text-sm text-gray-900 ${
+      className={`border-box h-10 w-[150px] cursor-pointer overflow-hidden border-r border-b bg-inherit px-1 py-2 text-sm text-gray-900 ${
         isEditing ? "border-1 border-blue-500 text-blue-500" : ""
       }`}
       style={{ minWidth: "150px", maxWidth: "150px" }}

@@ -49,6 +49,9 @@ export default function HideDialog({ tableId, viewId, searchQuery }: Props) {
     },
   });
 
+  const hasHiddenColumns =
+    fetchHiddenColumns.data && fetchHiddenColumns.data?.length > 0;
+
   const unhideColumn = api.filters.unhideColumn.useMutation({
     onSuccess: async () => {
       await utils.table.getHiddenColumns.invalidate({ viewId });
@@ -64,9 +67,18 @@ export default function HideDialog({ tableId, viewId, searchQuery }: Props) {
   return (
     <Popover>
       <PopoverTrigger className="cursor-pointer" asChild>
-        <button className="flex items-center space-x-1 rounded px-2 py-1 hover:bg-gray-100">
+        <button
+          className={
+            `flex items-center space-x-1 rounded px-2 py-1 hover:bg-gray-100 ` +
+            (hasHiddenColumns ? "bg-blue-100" : "")
+          }
+        >
           <EyeOff className="h-4 w-4" />
-          <span>Hide fields</span>
+          <span>
+            {hasHiddenColumns
+              ? `${fetchHiddenColumns.data.length} hidden field`
+              : "Hide Fields"}
+          </span>
         </button>
       </PopoverTrigger>
       <PopoverContent>
@@ -75,25 +87,27 @@ export default function HideDialog({ tableId, viewId, searchQuery }: Props) {
             <p>Find a field</p>ⓘ
           </div>
           <div className="flex flex-col space-y-2">
-            {fetchColumns.data?.map((column) => (
-              <div
-                key={column.id}
-                className="flex cursor-pointer items-center space-x-5 rounded px-2 py-1 hover:bg-gray-100"
-                onClick={() => {
-                  if (fetchHiddenColumns.data?.includes(column.id)) {
-                    unhideColumn.mutate({ columnId: column.id, viewId });
-                  } else {
-                    hideColumn.mutate({ columnId: column.id, viewId });
-                  }
-                }}
-              >
-                <Switch
-                  checked={!fetchHiddenColumns.data?.includes(column.id)}
-                  className="pointer-events-none h-2 w-7 text-gray-400" // <-- key fix
-                />
-                <span>{column.name}</span>
-              </div>
-            ))}
+            {fetchColumns.data
+              ?.filter((column) => column.order !== 0)
+              .map((column) => (
+                <div
+                  key={column.id}
+                  className="flex cursor-pointer items-center space-x-5 rounded px-2 py-1 hover:bg-gray-100"
+                  onClick={() => {
+                    if (fetchHiddenColumns.data?.includes(column.id)) {
+                      unhideColumn.mutate({ columnId: column.id, viewId });
+                    } else {
+                      hideColumn.mutate({ columnId: column.id, viewId });
+                    }
+                  }}
+                >
+                  <Switch
+                    checked={!fetchHiddenColumns.data?.includes(column.id)}
+                    className="pointer-events-none h-2 w-7 text-gray-400"
+                  />
+                  <span>{column.name}</span>
+                </div>
+              ))}
           </div>
         </div>
       </PopoverContent>

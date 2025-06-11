@@ -87,9 +87,18 @@ export default function FilterDialog({ tableId, viewId, searchQuery }: Props) {
   return (
     <Popover>
       <PopoverTrigger className="cursor-pointer" asChild>
-        <button className="flex items-center space-x-1 rounded px-2 py-1 hover:bg-gray-100">
+        <button
+          className={
+            `flex items-center space-x-1 rounded px-2 py-1 hover:bg-gray-100 ` +
+            (hasFilters ? "bg-green-100" : "bg-white")
+          }
+        >
           <Filter className="h-4 w-4" />
-          <span>Filter</span>
+          <span>
+            {hasFilters
+              ? `${fetchFilters.data.length} filters applied `
+              : "Filter"}
+          </span>
         </button>
       </PopoverTrigger>
 

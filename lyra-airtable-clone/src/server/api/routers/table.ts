@@ -451,6 +451,24 @@ export const tableRouter = createTRPCRouter({
       };
     }),
 
+  getViewName: protectedProcedure
+    .input(
+      z.object({
+        viewId: z.string(),
+      }),
+    )
+    .query(async ({ input }) => {
+      const { viewId } = input;
+      const view = await db.query.views.findFirst({
+        where: (views, { eq }) => eq(views.id, viewId),
+        columns: { name: true },
+      });
+      if (!view) {
+        throw new Error("View not found");
+      }
+      return view.name;
+    }),
+
   insert1kRows: protectedProcedure
     .input(
       z.object({

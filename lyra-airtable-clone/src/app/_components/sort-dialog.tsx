@@ -81,9 +81,13 @@ export default function SortDialog({ tableId, viewId, searchQuery }: Props) {
   return (
     <Popover>
       <PopoverTrigger className="cursor-pointer" asChild>
-        <button className="flex items-center space-x-1 rounded px-2 py-1 hover:bg-gray-100">
+        <button
+          className={`flex items-center space-x-1 rounded px-2 py-1 hover:bg-gray-100 ${hasSorts ? "bg-orange-100" : ""}`}
+        >
           <SortAsc className="h-4 w-4" />
-          <span>Sort</span>
+          <span>
+            {hasSorts ? `Sorted by ${fetchSorts.data.length} field` : "Sort"}
+          </span>
         </button>
       </PopoverTrigger>
       <PopoverContent className="w-90 p-4">

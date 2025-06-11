@@ -36,6 +36,8 @@ export default function ViewSidebar({
   selectedViewId,
 }: Props) {
   const [createOpen, setCreateOpen] = useState(true);
+  const [viewIsOpen, setViewIsOpen] = useState(false);
+  const [newViewName, setNewViewName] = useState("New Grid View");
   const utils = api.useUtils();
 
   const createView = api.table.createView.useMutation({
@@ -50,7 +52,7 @@ export default function ViewSidebar({
   });
 
   return (
-    <div className="flex h-screen w-64 flex-col overflow-y-auto border-r border-gray-200 px-3 py-2 text-sm text-gray-700">
+    <div className="flex h-screen w-64 flex-col overflow-y-auto border-r border-gray-200 px-3 py-2 text-sm font-medium text-black">
       {/* Search bar */}
       <div className="mb-2 flex items-center">
         <Search className="mr-2 h-4 w-4 text-gray-400" />
@@ -71,15 +73,13 @@ export default function ViewSidebar({
               onViewChange(view.id);
             }}
             className={`flex w-full cursor-pointer items-center rounded px-2 py-1 text-left ${
-              selectedViewId === view.id
-                ? "bg-blue-100 text-blue-600"
-                : "hover:bg-gray-100"
+              selectedViewId === view.id ? "bg-blue-100" : "hover:bg-gray-100"
             }`}
           >
-            <TableCellsSplit className="mr-2 h-4 w-4" />
-            <span className="flex-1">{view.name}</span>
+            <TableCellsSplit className="mr-2 h-4 w-4 text-blue-600" />
+            <span className="flex-1 text-black">{view.name}</span>
             {selectedViewId === view.id && (
-              <Check className="h-4 w-4 text-blue-600" />
+              <Check className="h-4 w-4 text-gray-500" />
             )}
           </button>
         ))}
@@ -108,11 +108,7 @@ export default function ViewSidebar({
                 icon: (
                   <TableCellsSplit className="mr-2 h-4 w-4 text-blue-500" />
                 ),
-                onClick: () =>
-                  createView.mutate({
-                    name: "New Grid View",
-                    tableId: tableId,
-                  }),
+                onClick: () => setViewIsOpen(true),
               },
               {
                 name: "Calendar",
@@ -170,6 +166,46 @@ export default function ViewSidebar({
           </div>
         )}
       </div>
+      {viewIsOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="flex flex-col rounded bg-white p-4 shadow-lg">
+            <input
+              autoFocus
+              type="text"
+              className="w-64 rounded border border-gray-300 px-2 py-1 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+              value={newViewName}
+              onChange={(e) => setNewViewName(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  createView.mutate({ name: newViewName, tableId });
+                  setNewViewName("New Grid View");
+                  setViewIsOpen(false);
+                }
+                if (e.key === "Escape") setViewIsOpen(false);
+              }}
+            />
+            <div className="mt-1  space-x-2 flex items-center justify-end cursor-pointer">
+              <button
+                className="mt-5 flex items-center rounded px-3 py-1 cursor-pointer
+                hover:bg-gray-100"
+                onClick={() => setViewIsOpen(false)}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  createView.mutate({ name: newViewName, tableId });
+                  setNewViewName("New Grid View");
+                  setViewIsOpen(false);
+                }}
+                className="mt-5 flex items-center space-x-2 rounded px-3 py-1 bg-blue-500 text-white cursor-pointer"
+              >
+                <span>Create View</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
