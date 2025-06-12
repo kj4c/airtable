@@ -30,6 +30,7 @@ export default function FilterDialog({ tableId, viewId, searchQuery }: Props) {
   );
   const utils = api.useUtils();
   const [inputValues, setInputValues] = useState<Record<string, string>>({});
+  const [operatorOverrides, setOperatorOverrides] = useState<Record<string, string>>({});
   const [debouncedInputValues] = useDebounce(inputValues, 500);
 
   const stringFilters = [
@@ -89,21 +90,18 @@ export default function FilterDialog({ tableId, viewId, searchQuery }: Props) {
   useEffect(() => {
     fetchFilters.data?.forEach((filter) => {
       const newValue = debouncedInputValues[filter.id]?.trim();
-      if (
-        newValue === ""
-      ) {
-        return;
-      }
+      const effectiveOperator = operatorOverrides[filter.id] ?? filter.operator;
+
       if (
         newValue !== undefined &&
         newValue !== (filter.value ?? "") &&
-        filter.operator !== "is empty" &&
-        filter.operator !== "is not empty"
+        effectiveOperator !== "is empty" &&
+        effectiveOperator !== "is not empty"
       ) {
         updateFilter.mutate({
           filterId: filter.id,
           value: newValue,
-          operator: filter.operator,
+          operator: effectiveOperator,
         });
       }
     });
@@ -139,8 +137,9 @@ export default function FilterDialog({ tableId, viewId, searchQuery }: Props) {
               {fetchFilters.data.map((filter) => (
                 <div key={filter.id} className="flex items-center">
                   <DropdownMenu>
-                    <DropdownMenuTrigger className="w-[150px] cursor-pointer border bg-white px-2 py-1 text-left text-sm">
+                    <DropdownMenuTrigger className="w-[150px] cursor-pointer border bg-white px-2 py-1 text-left flex items-center justify-between text-sm">
                       {filter.columnName}
+                      <span className="ml-2 text-gray-500">⏷</span>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent>
                       {fetchColumns.data?.map((col) => (
@@ -157,7 +156,12 @@ export default function FilterDialog({ tableId, viewId, searchQuery }: Props) {
                               ...prev,
                               [filter.id]: "",
                             }));
+                            setOperatorOverrides((prev) => ({
+                              ...prev,
+                              [filter.id]: col.type === "text" ? "contains" : ">",
+                            }));
                           }}
+                          className="cursor-pointer"
                         >
                           {col.name}
                         </DropdownMenuItem>
@@ -165,8 +169,9 @@ export default function FilterDialog({ tableId, viewId, searchQuery }: Props) {
                     </DropdownMenuContent>
                   </DropdownMenu>
                   <DropdownMenu>
-                    <DropdownMenuTrigger className="w-[200px] cursor-pointer border bg-white px-2 py-1 text-left text-sm">
+                    <DropdownMenuTrigger className="w-[200px] cursor-pointer border bg-white px-2 py-1 text-left text-sm flex items-center justify-between">
                       {filter.operator || "="}
+                      <span className="ml-2 text-gray-500">⏷</span>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent>
                       {(filter.columnType === "number"
