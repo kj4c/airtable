@@ -6,6 +6,7 @@ import {
   PopoverTrigger,
 } from "~/components/ui/popover";
 import { api } from "~/trpc/react";
+import { useEffect } from "react";
 
 type Props = {
   tableId: string;
@@ -63,6 +64,12 @@ export default function HideDialog({ tableId, viewId, searchQuery }: Props) {
       });
     },
   });
+
+  useEffect(() => {
+    fetchColumns.refetch();
+    fetchHiddenColumns.refetch();
+  }, [tableId, viewId]);
+
 
   return (
     <Popover>

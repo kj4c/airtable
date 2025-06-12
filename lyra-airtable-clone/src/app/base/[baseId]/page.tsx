@@ -47,23 +47,9 @@ export default function BaseDashboard() {
     });
 
     if (newTable?.id) {
-      await Promise.all([
-        insertColumn.mutateAsync({
-          name: "Name",
-          type: "text",
-          tableId: newTable.id,
-        }),
-        insertColumn.mutateAsync({
-          name: "Notes",
-          type: "text",
-          tableId: newTable.id,
-        }),
-        insertColumn.mutateAsync({
-          name: "Number",
-          type: "number",
-          tableId: newTable.id,
-        }),
-      ]);
+      await insertColumn.mutateAsync({ name: "Name", type: "text", tableId: newTable.id });
+      await insertColumn.mutateAsync({ name: "Notes", type: "text", tableId: newTable.id });
+      await insertColumn.mutateAsync({ name: "Number", type: "number", tableId: newTable.id });
 
       await Promise.all(
         Array.from({ length: 3 }).map(() =>

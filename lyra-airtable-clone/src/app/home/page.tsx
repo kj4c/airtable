@@ -71,15 +71,14 @@ export default function BasePage() {
       ];
       // default column for the table
       if (table?.id) {
-        await Promise.all(
-          defaultColumns.map((col) =>
-            createColumn.mutateAsync({
-              tableId: table.id,
-              name: col.name,
-              type: col.type as "text" | "number",
-            }),
-          ),
-        );
+        for (const col of defaultColumns) {
+          await createColumn.mutateAsync({
+            tableId: table.id,
+            name: col.name,
+            type: col.type as "text" | "number",
+          });
+        }
+
 
         await Promise.all(
           Array.from({ length: 3 }).map(() =>
