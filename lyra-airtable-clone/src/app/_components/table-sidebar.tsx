@@ -184,10 +184,9 @@ export default function ViewSidebar({
                 if (e.key === "Escape") setViewIsOpen(false);
               }}
             />
-            <div className="mt-1  space-x-2 flex items-center justify-end cursor-pointer">
+            <div className="mt-1 flex cursor-pointer items-center justify-end space-x-2">
               <button
-                className="mt-5 flex items-center rounded px-3 py-1 cursor-pointer
-                hover:bg-gray-100"
+                className="mt-5 flex cursor-pointer items-center rounded px-3 py-1 hover:bg-gray-100"
                 onClick={() => setViewIsOpen(false)}
               >
                 Cancel
@@ -198,7 +197,7 @@ export default function ViewSidebar({
                   setNewViewName("New Grid View");
                   setViewIsOpen(false);
                 }}
-                className="mt-5 flex items-center space-x-2 rounded px-3 py-1 bg-blue-500 text-white cursor-pointer"
+                className="mt-5 flex cursor-pointer items-center space-x-2 rounded bg-blue-500 px-3 py-1 text-white"
               >
                 <span>Create View</span>
               </button>

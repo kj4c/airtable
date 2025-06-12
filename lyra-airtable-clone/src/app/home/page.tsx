@@ -79,7 +79,6 @@ export default function BasePage() {
           });
         }
 
-
         await Promise.all(
           Array.from({ length: 3 }).map(() =>
             createRow.mutateAsync({

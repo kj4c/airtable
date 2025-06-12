@@ -11,6 +11,8 @@ import {
   PopoverTrigger,
 } from "~/components/ui/popover";
 import { api } from "~/trpc/react";
+import { useDebounce } from "use-debounce";
+import { useEffect, useState } from "react";
 
 type Props = {
   tableId: string;
@@ -27,6 +29,8 @@ export default function FilterDialog({ tableId, viewId, searchQuery }: Props) {
     },
   );
   const utils = api.useUtils();
+  const [inputValues, setInputValues] = useState<Record<string, string>>({});
+  const [debouncedInputValues] = useDebounce(inputValues, 500);
 
   const stringFilters = [
     "contains",
@@ -82,6 +86,29 @@ export default function FilterDialog({ tableId, viewId, searchQuery }: Props) {
     },
   );
 
+  useEffect(() => {
+    fetchFilters.data?.forEach((filter) => {
+      const newValue = debouncedInputValues[filter.id]?.trim();
+      if (
+        newValue === ""
+      ) {
+        return;
+      }
+      if (
+        newValue !== undefined &&
+        newValue !== (filter.value ?? "") &&
+        filter.operator !== "is empty" &&
+        filter.operator !== "is not empty"
+      ) {
+        updateFilter.mutate({
+          filterId: filter.id,
+          value: newValue,
+          operator: filter.operator,
+        });
+      }
+    });
+  }, [debouncedInputValues]);
+
   const hasFilters = fetchFilters.data && fetchFilters.data.length > 0;
 
   return (
@@ -119,12 +146,18 @@ export default function FilterDialog({ tableId, viewId, searchQuery }: Props) {
                       {fetchColumns.data?.map((col) => (
                         <DropdownMenuItem
                           key={col.id}
-                          onClick={() =>
+                          onClick={() => {
                             updateFilter.mutate({
                               filterId: filter.id,
                               columnId: col.id,
-                            })
-                          }
+                              operator: col.type === "text" ? "contains" : ">",
+                              value: "",
+                            });
+                            setInputValues((prev) => ({
+                              ...prev,
+                              [filter.id]: "",
+                            }));
+                          }}
                         >
                           {col.name}
                         </DropdownMenuItem>
@@ -142,12 +175,18 @@ export default function FilterDialog({ tableId, viewId, searchQuery }: Props) {
                       ).map((op) => (
                         <DropdownMenuItem
                           key={op}
-                          onClick={() =>
+                          onClick={() => {
                             updateFilter.mutate({
                               filterId: filter.id,
                               operator: op,
-                            })
-                          }
+                            });
+                            if (op === "is empty" || op === "is not empty") {
+                              setInputValues((prev) => ({
+                                ...prev,
+                                [filter.id]: "",
+                              }));
+                            }
+                          }}
                           className="cursor-pointer"
                         >
                           {op}
@@ -157,24 +196,14 @@ export default function FilterDialog({ tableId, viewId, searchQuery }: Props) {
                   </DropdownMenu>
 
                   <input
-                    type="text"
-                    defaultValue={
-                      filter.operator === "is empty" ||
-                      filter.operator === "is not empty"
-                        ? ""
-                        : (filter.value ?? "")
+                    type={filter.columnType === "number" ? "number" : "text"}
+                    value={inputValues[filter.id] ?? filter.value ?? ""}
+                    onChange={(e) =>
+                      setInputValues((prev) => ({
+                        ...prev,
+                        [filter.id]: e.target.value,
+                      }))
                     }
-                    onBlur={(e) => {
-                      const newValue = e.target.value.trim();
-                      const currentValue = filter.value ?? "";
-                      if (newValue !== currentValue) {
-                        updateFilter.mutate({
-                          filterId: filter.id,
-                          value: newValue,
-                          operator: filter.operator,
-                        });
-                      }
-                    }}
                     disabled={
                       filter.operator === "is empty" ||
                       filter.operator === "is not empty"

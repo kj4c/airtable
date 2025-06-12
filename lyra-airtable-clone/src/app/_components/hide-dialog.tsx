@@ -66,10 +66,9 @@ export default function HideDialog({ tableId, viewId, searchQuery }: Props) {
   });
 
   useEffect(() => {
-    fetchColumns.refetch();
-    fetchHiddenColumns.refetch();
+    void fetchColumns.refetch();
+    void fetchHiddenColumns.refetch();
   }, [tableId, viewId]);
-
 
   return (
     <Popover>

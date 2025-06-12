@@ -1,0 +1,1 @@
+ALTER TABLE "view_filter" ADD COLUMN "filter_order" integer DEFAULT 0 NOT NULL;

@@ -112,6 +112,7 @@ export const viewFilters = pgTable("view_filter", (d) => ({
     .references(() => columns.id),
   operator: d.varchar({ length: 50 }).notNull(),
   value: d.text(),
+  filter_order: d.integer().notNull().default(0),
 }));
 
 export const viewSorts = pgTable("view_sort", (d) => ({

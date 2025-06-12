@@ -39,9 +39,7 @@ const TableToolbar = ({
 
       <button className="flex items-center space-x-1 rounded px-2 py-1 hover:bg-gray-100">
         <Table className="h-4 w-4 text-blue-600" />
-        <span className="text-blue-600">
-          {viewName.data ?? "Loading..."}
-        </span>
+        <span className="text-blue-600">{viewName.data ?? "Loading..."}</span>
         <ChevronDown className="h-4 w-4 text-gray-500" />
         <Users className="ml-1 h-4 w-4 text-gray-500" />
       </button>

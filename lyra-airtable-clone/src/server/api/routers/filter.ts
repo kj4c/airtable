@@ -1,6 +1,6 @@
 // src/server/api/routers/base.ts
 
-import { and, eq, gt, ilike, lt, ne, not, type SQL } from "drizzle-orm";
+import { and, eq, gt, ilike, lt, ne, not, desc, type SQL } from "drizzle-orm";
 import { z } from "zod";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import { db } from "~/server/db";
@@ -48,6 +48,15 @@ export const filterRouter = createTRPCRouter({
     .mutation(async ({ input }) => {
       const { viewId, columnId, operator, value } = input;
 
+      const [lastFilter] = await db
+        .select({ order: viewFilters.filter_order })
+        .from(viewFilters)
+        .where(eq(viewFilters.viewId, viewId))
+        .orderBy(desc(viewFilters.filter_order))
+        .limit(1);
+
+      const nextOrder = (lastFilter?.order ?? -1) + 1;
+
       // insert the new filter into the database
       const newFilter = await db
         .insert(viewFilters)
@@ -56,6 +65,7 @@ export const filterRouter = createTRPCRouter({
           columnId,
           operator,
           value: value ?? null,
+          filter_order: nextOrder,
         })
         .returning();
 
@@ -83,7 +93,8 @@ export const filterRouter = createTRPCRouter({
         })
         .from(viewFilters)
         .innerJoin(columns, eq(viewFilters.columnId, columns.id))
-        .where(eq(viewFilters.viewId, viewId));
+        .where(eq(viewFilters.viewId, viewId))
+        .orderBy(viewFilters.filter_order);
 
       return filters;
     }),
@@ -105,6 +116,7 @@ export const filterRouter = createTRPCRouter({
       ) {
         updates.value = null;
       }
+      console.log(updates.operator, updates.value);
 
       if (Object.keys(updates).length === 0) {
         console.log("No updates provided for filter, skipping update.");
