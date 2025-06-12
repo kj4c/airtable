@@ -82,7 +82,7 @@ export default function HideDialog({ tableId, viewId, searchQuery }: Props) {
           <EyeOff className="h-4 w-4" />
           <span>
             {hasHiddenColumns
-              ? `${fetchHiddenColumns.data.length} hidden field`
+              ? `${fetchHiddenColumns.data.length} hidden fields`
               : "Hide Fields"}
           </span>
         </button>

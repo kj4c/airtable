@@ -86,7 +86,7 @@ export default function SortDialog({ tableId, viewId, searchQuery }: Props) {
         >
           <SortAsc className="h-4 w-4" />
           <span>
-            {hasSorts ? `Sorted by ${fetchSorts.data.length} field` : "Sort"}
+            {hasSorts ? `Sorted by ${fetchSorts.data.length} fields` : "Sort"}
           </span>
         </button>
       </PopoverTrigger>
