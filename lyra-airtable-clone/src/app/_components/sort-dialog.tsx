@@ -107,7 +107,7 @@ export default function SortDialog({ tableId, viewId, searchQuery }: Props) {
                     className="flex w-full items-center justify-between space-x-1"
                   >
                     <DropdownMenu>
-                      <DropdownMenuTrigger className="w-[60%] cursor-pointer border-1 px-1 text-left text-sm flex items-center justify-between hover:bg-gray-100">
+                      <DropdownMenuTrigger className="flex w-[60%] cursor-pointer items-center justify-between border-1 px-1 text-left text-sm hover:bg-gray-100">
                         {sort.columnName}
                         <span className="ml-2 text-gray-500">⏷</span>
                       </DropdownMenuTrigger>
@@ -129,7 +129,7 @@ export default function SortDialog({ tableId, viewId, searchQuery }: Props) {
                       </DropdownMenuContent>
                     </DropdownMenu>
                     <DropdownMenu>
-                      <DropdownMenuTrigger className="w-[30%] cursor-pointer border-1 px-1 text-center text-sm flex items-center justify-between hover:bg-gray-100">
+                      <DropdownMenuTrigger className="flex w-[30%] cursor-pointer items-center justify-between border-1 px-1 text-center text-sm hover:bg-gray-100">
                         {sort.direction === "asc"
                           ? isNumber
                             ? "1 → 9"

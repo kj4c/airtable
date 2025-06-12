@@ -16,6 +16,7 @@ import {
 import { api } from "~/trpc/react";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
+import { Loader } from "lucide-react";
 
 export default function BasePage() {
   const [open, setOpen] = useState(false);
@@ -23,7 +24,7 @@ export default function BasePage() {
   const [error, setError] = useState("");
   const utils = api.useUtils();
 
-  const { data: userBases, refetch } = api.base.getAll.useQuery();
+  const { data: userBases, refetch, isLoading } = api.base.getAll.useQuery();
 
   // call the api using api.base.createBase, possible from root.ts
   const createBase = api.base.createBase.useMutation({
@@ -136,16 +137,23 @@ export default function BasePage() {
         </Dialog>
       </div>
 
-      <div className="mt-4 flex flex-wrap gap-4">
-        {userBases?.map((base) => (
-          <Link
-            href={`/base/${base.id}?name=${encodeURIComponent(base.name)}`}
-            key={base.id}
-          >
-            <BaseBox key={base.id} name={base.name} />
-          </Link>
-        ))}
-      </div>
+      {isLoading ? (
+        <div className="flex h-[calc(100vh-200px)] w-full items-center justify-center">
+          <Loader className="h-12 w-12 animate-spin text-gray-600" />
+          <span className="ml-2 text-lg text-gray-600">Loading bases...</span>
+        </div>
+      ) : (
+        <div className="mt-4 flex flex-wrap gap-4">
+          {userBases?.map((base) => (
+            <Link
+              href={`/base/${base.id}?name=${encodeURIComponent(base.name)}`}
+              key={base.id}
+            >
+              <BaseBox key={base.id} name={base.name} />
+            </Link>
+          ))}
+        </div>
+      )}
     </AppLayout>
   );
 }

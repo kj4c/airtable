@@ -30,7 +30,9 @@ export default function FilterDialog({ tableId, viewId, searchQuery }: Props) {
   );
   const utils = api.useUtils();
   const [inputValues, setInputValues] = useState<Record<string, string>>({});
-  const [operatorOverrides, setOperatorOverrides] = useState<Record<string, string>>({});
+  const [operatorOverrides, setOperatorOverrides] = useState<
+    Record<string, string>
+  >({});
   const [debouncedInputValues] = useDebounce(inputValues, 500);
 
   const stringFilters = [
@@ -137,7 +139,7 @@ export default function FilterDialog({ tableId, viewId, searchQuery }: Props) {
               {fetchFilters.data.map((filter) => (
                 <div key={filter.id} className="flex items-center">
                   <DropdownMenu>
-                    <DropdownMenuTrigger className="w-[150px] cursor-pointer border bg-white px-2 py-1 text-left flex items-center justify-between text-sm">
+                    <DropdownMenuTrigger className="flex w-[150px] cursor-pointer items-center justify-between border bg-white px-2 py-1 text-left text-sm">
                       {filter.columnName}
                       <span className="ml-2 text-gray-500">⏷</span>
                     </DropdownMenuTrigger>
@@ -158,7 +160,8 @@ export default function FilterDialog({ tableId, viewId, searchQuery }: Props) {
                             }));
                             setOperatorOverrides((prev) => ({
                               ...prev,
-                              [filter.id]: col.type === "text" ? "contains" : ">",
+                              [filter.id]:
+                                col.type === "text" ? "contains" : ">",
                             }));
                           }}
                           className="cursor-pointer"
@@ -169,7 +172,7 @@ export default function FilterDialog({ tableId, viewId, searchQuery }: Props) {
                     </DropdownMenuContent>
                   </DropdownMenu>
                   <DropdownMenu>
-                    <DropdownMenuTrigger className="w-[200px] cursor-pointer border bg-white px-2 py-1 text-left text-sm flex items-center justify-between">
+                    <DropdownMenuTrigger className="flex w-[200px] cursor-pointer items-center justify-between border bg-white px-2 py-1 text-left text-sm">
                       {filter.operator || "="}
                       <span className="ml-2 text-gray-500">⏷</span>
                     </DropdownMenuTrigger>

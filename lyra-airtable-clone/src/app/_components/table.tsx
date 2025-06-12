@@ -201,13 +201,14 @@ export function DataTable({ tableId, viewId, searchQuery }: DataTableProps) {
   return (
     <div
       ref={tableContainerRef}
-      className="relative h-full overflow-auto border"
+      className="relative overflow-auto border"
+      style={{ height: `calc(100vh - 129px)` }}
       onScroll={(e) => fetchMoreOnBottomReached(e.currentTarget)}
     >
       <table
         /* forces table to rerender whenever sort is added or view is changed! */
         key={tableResetKey}
-        className="box-border w-max min-w-fit table-fixed border-separate border-spacing-0 divide-y divide-gray-200 pb-32"
+        className="box-border w-max min-w-fit table-fixed border-separate border-spacing-0 divide-y divide-gray-200 pb-12"
       >
         <thead className="sticky top-0 z-10 bg-gray-50">
           {table.getHeaderGroups().map((headerGroup) => (

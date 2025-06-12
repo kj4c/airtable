@@ -15,6 +15,7 @@ import {
   Check,
   ChevronDown,
   ChevronRight,
+  ChevronLeft,
 } from "lucide-react";
 import { api } from "~/trpc/react";
 
@@ -96,7 +97,7 @@ export default function ViewSidebar({
           {createOpen ? (
             <ChevronDown className="h-4 w-4" />
           ) : (
-            <ChevronRight className="h-4 w-4" />
+            <ChevronLeft className="h-4 w-4" />
           )}
         </button>
 
