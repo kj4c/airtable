@@ -71,12 +71,8 @@ export function EditableCell({
     },
 
     onSettled: async () => {
-      void utils.table.getTableData.invalidate({
-        viewId,
-        limit: 100,
-        searchQuery,
-      });
-    },
+      void utils.table.getTableData.invalidate();
+    }
   });
 
   const currentValue = cell.getValue();
