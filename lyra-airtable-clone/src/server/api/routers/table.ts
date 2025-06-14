@@ -469,7 +469,7 @@ export const tableRouter = createTRPCRouter({
       return view.name;
     }),
 
-  insert1kRows: protectedProcedure
+  insert10kRows: protectedProcedure
     .input(
       z.object({
         tableId: z.string(),
@@ -489,58 +489,66 @@ export const tableRouter = createTRPCRouter({
         columns: { order: true },
       });
 
-      let currentOrder =
+      const currentOrder =
         existingRows.length === 0
           ? 0
           : Math.max(...existingRows.map((r) => r.order ?? 0)) + 1;
 
       // need to batch the rows to avoid hitting the max query size
-      const totalRows = 1000;
+      const totalRows = 10000;
       const batchSize = 500;
 
-      for (
-        let batchStart = 0;
-        batchStart < totalRows;
-        batchStart += batchSize
-      ) {
-        // generate new rows
-        const rowsToInsert = Array.from({ length: batchSize }, (_, i) => ({
-          tableId,
-          order: currentOrder + i,
-        }));
+      const insertBatch = async (batchStart: number) => {
+      const rowsToInsert = Array.from({ length: batchSize }, (_, i) => ({
+        tableId,
+        order: currentOrder + batchStart + i,
+      }));
 
-        // insert the rows to get ids
-        const insertedRows = await db
-          .insert(rows)
-          .values(rowsToInsert)
-          .returning({ id: rows.id, order: rows.order });
+      const insertedRows = await db
+        .insert(rows)
+        .values(rowsToInsert)
+        .returning({ id: rows.id, order: rows.order });
 
-        const cellsToInsert = [];
+      const cellsToInsert = [];
 
-        for (const row of insertedRows) {
-          for (const column of columnsForTable) {
-            let value = "";
+      for (const row of insertedRows) {
+        for (const column of columnsForTable) {
+          let value = "";
 
-            if (column.type === "text") {
-              value = faker.lorem.words(2);
-            } else if (column.type === "number") {
-              value = faker.number.int({ min: 0, max: 1000 }).toString();
-            }
-
-            cellsToInsert.push({
-              rowId: row.id,
-              columnId: column.id,
-              value,
-            });
+          if (column.type === "text") {
+            value = faker.lorem.words(2);
+          } else if (column.type === "number") {
+            value = faker.number.int({ min: 0, max: 1000 }).toString();
           }
-        }
-        if (cellsToInsert.length > 0) {
-          await db.insert(cells).values(cellsToInsert);
-        }
 
-        currentOrder += batchSize;
+          cellsToInsert.push({
+            rowId: row.id,
+            columnId: column.id,
+            value,
+          });
+        }
       }
 
-      return { success: true, message: "Inserted 1k rows" };
+      if (cellsToInsert.length > 0) {
+        await db.insert(cells).values(cellsToInsert);
+      }
+    };
+
+    // Synchronous: Insert first 2,000
+    await insertBatch(0);
+
+    // Asynchronous: Insert rest in background
+    void (async () => {
+      for (let batchStart = batchSize; batchStart < totalRows; batchStart += batchSize) {
+        try {
+          await insertBatch(batchStart);
+        } catch (e) {
+          console.error(`Batch insert failed at ${batchStart}:`, e);
+          break;
+        }
+      }
+    })();
+
+    return { success: true, message: "Inserted first 2,000 rows, remaining in progress." };
     }),
 });

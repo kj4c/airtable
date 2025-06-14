@@ -76,7 +76,7 @@ export default function BaseDashboard() {
       await utils.table.getAllColumns.invalidate({ tableId: newTable.id });
       await utils.table.getTableData.invalidate({
         viewId: selectedViewId ?? "",
-        limit: 100,
+        limit: 1000,
         searchQuery: debouncedSearchQuery,
       });
     }

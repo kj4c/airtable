@@ -29,14 +29,14 @@ export function EditableCell({
 
       const previous = utils.table.getTableData.getInfiniteData({
         viewId,
-        limit: 100,
+        limit: 1000,
         searchQuery,
       });
 
       if (!previous) return { previous };
 
       utils.table.getTableData.setInfiniteData(
-        { viewId, limit: 100, searchQuery },
+        { viewId, limit: 1000, searchQuery },
         (oldData) => {
           if (!oldData) return oldData;
 
@@ -64,7 +64,7 @@ export function EditableCell({
     onError: (_err, _newCell, context) => {
       if (context?.previous) {
         utils.table.getTableData.setInfiniteData(
-          { viewId, limit: 100 },
+          { viewId, limit: 1000 },
           context.previous,
         );
       }

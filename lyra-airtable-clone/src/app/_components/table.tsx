@@ -52,7 +52,7 @@ export function DataTable({ tableId, viewId, searchQuery }: DataTableProps) {
     api.table.getTableData.useInfiniteQuery(
       {
         viewId,
-        limit: 100,
+        limit: 1000,
         searchQuery,
       },
       {
@@ -116,7 +116,7 @@ export function DataTable({ tableId, viewId, searchQuery }: DataTableProps) {
       if (containerRefElement) {
         const { scrollHeight, scrollTop, clientHeight } = containerRefElement;
         if (
-          scrollHeight - scrollTop - clientHeight < clientHeight * 2 &&
+          scrollHeight - scrollTop - clientHeight < clientHeight * 8 &&
           !isFetching &&
           totalFetched < totalDBRowCount
         ) {
@@ -140,7 +140,7 @@ export function DataTable({ tableId, viewId, searchQuery }: DataTableProps) {
     onSuccess: async () => {
       await utils.table.getTableData.invalidate({
         viewId: viewId,
-        limit: 100,
+        limit: 1000,
         searchQuery,
       });
       await utils.table.getColumns.invalidate();
@@ -154,17 +154,17 @@ export function DataTable({ tableId, viewId, searchQuery }: DataTableProps) {
     onSuccess: async () => {
       await utils.table.getTableData.invalidate({
         viewId: viewId,
-        limit: 100,
+        limit: 1000,
         searchQuery,
       });
     },
   });
 
-  const insert1kRows = api.table.insert1kRows.useMutation({
+  const insert10kRows = api.table.insert10kRows.useMutation({
     onSuccess: async () => {
       await utils.table.getTableData.invalidate({
         viewId,
-        limit: 100,
+        limit: 1000,
         searchQuery,
       });
     },
@@ -192,11 +192,11 @@ export function DataTable({ tableId, viewId, searchQuery }: DataTableProps) {
   }, [tableId, createRow]);
 
   // Handle bulk insert
-  const handleInsert1kRows = useCallback(() => {
-    insert1kRows.mutate({
+  const handleinsert10kRows = useCallback(() => {
+    insert10kRows.mutate({
       tableId: tableId,
     });
-  }, [tableId, insert1kRows]);
+  }, [tableId, insert10kRows]);
 
   return (
     <div
@@ -335,10 +335,10 @@ export function DataTable({ tableId, viewId, searchQuery }: DataTableProps) {
                 </Button>
                 <Button
                   className="h-2 cursor-pointer border-1 bg-white text-black hover:bg-gray-50"
-                  onClick={handleInsert1kRows}
-                  disabled={insert1kRows.isPending}
+                  onClick={handleinsert10kRows}
+                  disabled={insert10kRows.isPending}
                 >
-                  {insert1kRows.isPending ? "Adding..." : "Add 1k rows"}
+                  {insert10kRows.isPending ? "Adding..." : "Add 10k rows"}
                 </Button>
               </div>
             </td>

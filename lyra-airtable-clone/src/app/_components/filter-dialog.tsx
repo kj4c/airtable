@@ -49,7 +49,7 @@ export default function FilterDialog({ tableId, viewId, searchQuery }: Props) {
       await utils.filters.getFilters.invalidate({ viewId });
       await utils.table.getTableData.invalidate({
         viewId,
-        limit: 100,
+        limit: 1000,
         searchQuery,
       });
     },
@@ -60,7 +60,7 @@ export default function FilterDialog({ tableId, viewId, searchQuery }: Props) {
       await utils.filters.getFilters.invalidate({ viewId });
       await utils.table.getTableData.invalidate({
         viewId,
-        limit: 100,
+        limit: 1000,
         searchQuery,
       });
     },
@@ -71,7 +71,7 @@ export default function FilterDialog({ tableId, viewId, searchQuery }: Props) {
       await utils.filters.getFilters.invalidate({ viewId });
       await utils.table.getTableData.invalidate({
         viewId,
-        limit: 100,
+        limit: 1000,
         searchQuery,
       });
     },

@@ -34,7 +34,7 @@ export default function SortDialog({ tableId, viewId, searchQuery }: Props) {
       await utils.sorts.getSorts.refetch({ viewId });
       await utils.table.getTableData.invalidate({
         viewId,
-        limit: 100,
+        limit: 1000,
         searchQuery,
       });
     },
@@ -46,7 +46,7 @@ export default function SortDialog({ tableId, viewId, searchQuery }: Props) {
       await utils.sorts.getSorts.refetch({ viewId });
       await utils.table.getTableData.invalidate({
         viewId,
-        limit: 100,
+        limit: 1000,
         searchQuery,
       });
     },
@@ -58,7 +58,7 @@ export default function SortDialog({ tableId, viewId, searchQuery }: Props) {
       await utils.sorts.getSorts.refetch({ viewId });
       await utils.table.getTableData.invalidate({
         viewId,
-        limit: 100,
+        limit: 1000,
         searchQuery,
       });
     },
