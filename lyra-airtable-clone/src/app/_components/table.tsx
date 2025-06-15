@@ -52,7 +52,7 @@ export function DataTable({ tableId, viewId, searchQuery }: DataTableProps) {
     api.table.getTableData.useInfiniteQuery(
       {
         viewId,
-        limit: 1000,
+        limit: 500,
         searchQuery,
       },
       {
@@ -140,7 +140,7 @@ export function DataTable({ tableId, viewId, searchQuery }: DataTableProps) {
     onSuccess: async () => {
       await utils.table.getTableData.invalidate({
         viewId: viewId,
-        limit: 1000,
+        limit: 500,
         searchQuery,
       });
       await utils.table.getColumns.invalidate();
@@ -154,7 +154,7 @@ export function DataTable({ tableId, viewId, searchQuery }: DataTableProps) {
     onSuccess: async () => {
       await utils.table.getTableData.invalidate({
         viewId: viewId,
-        limit: 1000,
+        limit: 500,
         searchQuery,
       });
     },
@@ -162,11 +162,17 @@ export function DataTable({ tableId, viewId, searchQuery }: DataTableProps) {
 
   const insert10kRows = api.table.insert10kRows.useMutation({
     onSuccess: async () => {
-      await utils.table.getTableData.invalidate({
-        viewId,
-        limit: 1000,
-        searchQuery,
-      });
+    const interval = setInterval(() => {
+      void (async () => {
+        try {
+          await utils.table.getTableData.invalidate();
+        } catch (err) {
+          console.error("Failed to invalidate table data:", err);
+        }
+      })();
+    }, 1000);
+
+    setTimeout(() => clearInterval(interval), 30000);
     },
   });
 

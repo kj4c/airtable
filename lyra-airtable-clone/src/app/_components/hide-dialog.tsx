@@ -44,7 +44,7 @@ export default function HideDialog({ tableId, viewId, searchQuery }: Props) {
       await utils.table.getColumns.invalidate({ tableId, viewId });
       await utils.table.getTableData.invalidate({
         viewId,
-        limit: 1000,
+        limit: 500,
         searchQuery,
       });
     },
@@ -59,15 +59,15 @@ export default function HideDialog({ tableId, viewId, searchQuery }: Props) {
       await utils.table.getColumns.invalidate({ tableId, viewId });
       await utils.table.getTableData.invalidate({
         viewId,
-        limit: 1000,
+        limit: 500,
         searchQuery,
       });
     },
   });
 
   useEffect(() => {
-    void fetchColumns.refetch();
-    void fetchHiddenColumns.refetch();
+    void fetchColumns?.refetch();
+    void fetchHiddenColumns?.refetch();
   }, [tableId, viewId]);
 
   return (

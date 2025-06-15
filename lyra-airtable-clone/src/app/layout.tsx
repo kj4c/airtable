@@ -8,7 +8,8 @@ import { TRPCReactProvider } from "~/trpc/react";
 
 export const metadata: Metadata = {
   title: "Airtable Clone",
-  description: "Airtable Clone built with Next.js, tRPC, and Drizzle ORM by @kj4c",
+  description:
+    "Airtable Clone built with Next.js, tRPC, and Drizzle ORM by @kj4c",
   icons: [{ rel: "icon", url: "/airtable-seeklogo.png" }],
 };
 
