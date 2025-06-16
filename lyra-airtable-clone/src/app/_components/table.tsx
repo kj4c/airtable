@@ -6,7 +6,7 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import { createPortal } from "react-dom";
-import React, { useMemo, useCallback } from "react";
+import React, { useMemo, useCallback, useState } from "react";
 import { Button } from "../../components/ui/button";
 import { api } from "~/trpc/react";
 import {
@@ -46,6 +46,7 @@ export function DataTable({ tableId, viewId, searchQuery }: DataTableProps) {
   const [type, setType] = React.useState<"text" | "number">("text");
   const utils = api.useUtils();
   const tableContainerRef = React.useRef<HTMLDivElement>(null);
+  const [isCreatingColumn, setIsCreatingColumn] = useState(false);
   const { data: sorts = [] } = api.sorts.getSorts.useQuery({ viewId });
 
   const { data, fetchNextPage, hasNextPage, isFetching } =
@@ -116,7 +117,7 @@ export function DataTable({ tableId, viewId, searchQuery }: DataTableProps) {
       if (containerRefElement) {
         const { scrollHeight, scrollTop, clientHeight } = containerRefElement;
         if (
-          scrollHeight - scrollTop - clientHeight < clientHeight * 8 &&
+          scrollHeight - scrollTop - clientHeight < clientHeight * 15 &&
           !isFetching &&
           totalFetched < totalDBRowCount
         ) {
@@ -162,33 +163,32 @@ export function DataTable({ tableId, viewId, searchQuery }: DataTableProps) {
 
   const insert10kRows = api.table.insert10kRows.useMutation({
     onSuccess: async () => {
-    const interval = setInterval(() => {
-      void (async () => {
-        try {
-          await utils.table.getTableData.invalidate();
-        } catch (err) {
-          console.error("Failed to invalidate table data:", err);
-        }
-      })();
-    }, 1000);
-
-    setTimeout(() => clearInterval(interval), 30000);
+      try {
+        await utils.table.getTableData.invalidate();
+      } catch (err) {
+        console.error("Failed to invalidate table data:", err);
+      }
     },
-  });
+  }); 
 
   const handleCreateColumn = useCallback(async () => {
-    if (columnName.trim()) {
-      createColumn.mutate({
-        name: columnName,
-        type: type,
-        tableId: tableId,
-      });
-      setColumnName("");
-      setType("text");
-      setOpen(false);
-    }
+  if (!columnName.trim()) return;
+
+  setIsCreatingColumn(true);
+  try {
+    await createColumn.mutateAsync({
+      name: columnName,
+      type,
+      tableId,
+    });
+    setColumnName("");
+    setType("text");
+    setOpen(false);
+  } finally {
+    setIsCreatingColumn(false);
     await utils.table.getColumns.invalidate();
-  }, [columnName, type, tableId, createColumn]);
+  }
+}, [columnName, type, tableId, createColumn]);
 
   // Handle row creation
   const handleCreateRow = useCallback(() => {
@@ -211,7 +211,12 @@ export function DataTable({ tableId, viewId, searchQuery }: DataTableProps) {
       style={{ height: `calc(100vh - 129px)` }}
       onScroll={(e) => fetchMoreOnBottomReached(e.currentTarget)}
     >
-      <table
+        {isCreatingColumn && (
+      <div className="absolute inset-0 z-50 flex items-center justify-center bg-white/60 backdrop-blur-sm">
+        <span className="text-sm text-gray-700">Creating column...</span>
+      </div>
+    )}
+      <table  
         /* forces table to rerender whenever sort is added or view is changed! */
         key={tableResetKey}
         className="box-border w-max min-w-fit table-fixed border-separate border-spacing-0 divide-y divide-gray-200 pb-12"

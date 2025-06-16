@@ -295,8 +295,10 @@ export const tableRouter = createTRPCRouter({
 
       const filterConditions = filters
         .filter((f) => {
+          // checks if his needs a value (only if its not is empty and is not empty)
           const isValueRequired =
             f.operator !== "is empty" && f.operator !== "is not empty";
+          // if requires a value make sure the value exists n not empty string
           return !(isValueRequired && (!f.value || f.value.trim() === ""));
         })
         .map((f) => {
@@ -309,6 +311,7 @@ export const tableRouter = createTRPCRouter({
             ? sql`CAST(${cells.value} AS INTEGER)`
             : sql`${cells.value}`;
 
+          // limit one so we don't scan for cells after finding a match
           return exists(
             db
               .select({ id: cells.id })
@@ -357,7 +360,7 @@ export const tableRouter = createTRPCRouter({
 
         // make em one big or
         if (filteredSearchQueries.length > 0) {
-          // to disable red line
+          // to disable red line because they think filteredSearchQueries is undefined
           searchConditions.push(or(...filteredSearchQueries) ?? sql`TRUE`);
         }
       }
@@ -375,6 +378,7 @@ export const tableRouter = createTRPCRouter({
                 const isNumeric = col?.type === "number";
 
                 const cellValueSql = isNumeric
+                // turn it numeric first making sure its not an empty value so cast works
                   ? sql`(
                   SELECT CASE
                     WHEN ${cells.value} IS NOT NULL AND TRIM(${cells.value}) != ''
@@ -394,6 +398,7 @@ export const tableRouter = createTRPCRouter({
                   LIMIT 1
                 )`;
 
+                // put emtpy cells at the last
                 const isEmptyCheck = sql`(
                   SELECT ${cells.value} IS NULL OR ${cells.value} = ''
                   FROM ${cells}
@@ -536,7 +541,7 @@ export const tableRouter = createTRPCRouter({
 
       await insertBatch(0);
 
-      void (async () => {
+      // void (async () => {
         for (
           let batchStart = batchSize;
           batchStart < totalRows;
@@ -549,7 +554,7 @@ export const tableRouter = createTRPCRouter({
             break;
           }
         }
-      })();
+      // })();
 
       return {
         success: true,

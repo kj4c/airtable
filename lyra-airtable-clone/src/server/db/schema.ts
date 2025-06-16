@@ -88,7 +88,9 @@ export const tables = pgTable("table", (d) => ({
     .uuid()
     .notNull()
     .references(() => bases.id),
-}));
+}), (t) => [
+  index("table_base_id_idx").on(t.baseId),
+]);
 
 export const views = pgTable("view", (d) => ({
   id: d.uuid().primaryKey().defaultRandom(),
@@ -98,7 +100,9 @@ export const views = pgTable("view", (d) => ({
     .notNull()
     .references(() => tables.id),
   createdAt: d.timestamp().defaultNow().notNull(),
-}));
+}), (t) => [
+  index("view_table_id_idx").on(t.tableId),
+]);
 
 export const viewFilters = pgTable("view_filter", (d) => ({
   id: d.uuid().primaryKey().defaultRandom(),
@@ -113,7 +117,9 @@ export const viewFilters = pgTable("view_filter", (d) => ({
   operator: d.varchar({ length: 50 }).notNull(),
   value: d.text(),
   filter_order: d.integer().notNull().default(0),
-}));
+}), (t) => [
+  index("filter_view_id_idx").on(t.viewId),
+]);
 
 export const viewSorts = pgTable("view_sort", (d) => ({
   id: d.uuid().primaryKey().defaultRandom(),
@@ -127,7 +133,9 @@ export const viewSorts = pgTable("view_sort", (d) => ({
     .references(() => columns.id),
   direction: d.varchar({ length: 4 }).notNull(),
   sort_order: d.integer().notNull().default(0),
-}));
+}), (t) => [
+  index("sort_view_id_idx").on(t.viewId),
+]);
 
 export const viewHiddenColumns = pgTable("view_hidden_column", (d) => ({
   id: d.uuid().primaryKey().defaultRandom(),
@@ -139,7 +147,9 @@ export const viewHiddenColumns = pgTable("view_hidden_column", (d) => ({
     .uuid()
     .notNull()
     .references(() => columns.id),
-}));
+}), (t) => [
+  index("hiddencol_view_id_idx").on(t.viewId),
+]);
 
 export const columns = pgTable("column", (d) => ({
   id: d.uuid().primaryKey().defaultRandom(),
@@ -150,7 +160,9 @@ export const columns = pgTable("column", (d) => ({
     .notNull()
     .references(() => tables.id),
   order: d.integer().notNull().default(0),
-}));
+}), (t) => [
+  index("column_table_id_idx").on(t.tableId), 
+]);
 
 export const rows = pgTable("row", (d) => ({
   id: d.uuid().primaryKey().defaultRandom(),
@@ -159,7 +171,9 @@ export const rows = pgTable("row", (d) => ({
     .notNull()
     .references(() => tables.id),
   order: d.integer().notNull().default(0),
-}));
+}), (t) => [
+  index("row_table_id_idx").on(t.tableId),
+]);
 
 export const cells = pgTable(
   "cell",
