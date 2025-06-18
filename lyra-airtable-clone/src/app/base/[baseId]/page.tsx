@@ -105,20 +105,39 @@ export default function BaseDashboard() {
   useEffect(() => {
     if (viewsData && viewsData.length > 0) {
       setViews(viewsData.map(({ id, name }) => ({ id, name })));
-      setSelectedViewId(viewsData[0]?.id ?? null);
-    } else {
+      if (!selectedViewId || !viewsData.some(view => view.id === selectedViewId)) {
+        setSelectedViewId(viewsData[0]?.id ?? null);
+      }
+    } else if (viewsData) {
       setViews([]);
       setSelectedViewId(null);
     }
     setSearchQuery("");
-  }, [viewsData, selectedTableId]);
+  }, [viewsData, selectedViewId]);
 
   useEffect(() => {
-    const firstTable = baseData?.[0];
-    if (firstTable && !selectedTableId) {
-      setSelectedTableId(firstTable.id);
+    if (baseData && baseData.length > 0 && !selectedTableId) {
+      setSelectedTableId(baseData[0]?.id ?? null);
+      if (viewsData && viewsData.length > 0) {
+        setSelectedViewId(viewsData[0]?.id ?? null);
+      }
     }
-  }, [baseData, selectedTableId]);
+  }, [baseData, selectedTableId, viewsData]);
+
+  useEffect(() => {
+    const storedTableId = localStorage.getItem("tableId");
+    const storedViewId = localStorage.getItem("viewId");
+    if (storedTableId) setSelectedTableId(storedTableId);
+    if (storedViewId) setSelectedViewId(storedViewId);
+  }, []);
+
+  useEffect(() => {
+    if (selectedTableId) localStorage.setItem("tableId", selectedTableId);
+  }, [selectedTableId]);
+  
+  useEffect(() => {
+    if (selectedViewId) localStorage.setItem("viewId", selectedViewId);
+  }, [selectedViewId]);
 
   return (
     <BaseLayout baseName={baseName ?? "No base name"}>
