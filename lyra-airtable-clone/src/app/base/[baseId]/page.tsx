@@ -7,7 +7,7 @@ import { useEffect, useState } from "react";
 import BaseLayout from "~/components/ui/base-layout";
 import { Button } from "~/components/ui/button";
 import React from "react";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, Plus } from "lucide-react";
 import TableToolbar from "~/app/_components/table-toolbar";
 import ViewSidebar from "~/app/_components/table-sidebar";
 import { useDebounce } from "use-debounce";
@@ -123,32 +123,48 @@ export default function BaseDashboard() {
   return (
     <BaseLayout baseName={baseName ?? "No base name"}>
       <div className="flex w-full flex-1 flex-col">
-        <div className="flex w-full flex-col items-stretch bg-green-800">
-          <div className="ml-2 flex h-8 items-end bg-green-800 px-2">
-            {baseData?.map((t) => (
+        <div className="flex flex-col items-stretch bg-[#048a0e] ">
+          <div className=" flex h-8 w-full items-center">
+            <div className="pl-3 flex items-center bg-[#0a7c0e] w-full mr-2 rounded-t-sm">
+              {baseData?.map((t) => (
+                <button
+                  key={t.id}
+                  onClick={() => handleTableChange(t.id)}
+                  disabled={selectedTableId === t.id}
+                  className={`h-8 cursor-pointer rounded-t-xs bg-[#0a7c0e] px-4 py-1 text-[13px] flex items-center justify-center ${
+                    selectedTableId === t.id
+                      ? "rounded-b-none border-b-0 bg-white text-black"
+                      : "text-white hover:bg-green-900"
+                  }`}
+                >
+                  {t.name}
+                </button>
+              ))}
+              <div className="relative flex items-center h-8">
+                <div className="h-3 w-px bg-white opacity-30 mr-[11px] mt-[1px]" />
+                <button className="flex items-center justify-center h-[16px] w-[16px]">
+                  <ChevronDown className="h-[16px] w-[16px] text-white stroke-[1.5px]" />
+                </button>
+                <div className="h-3 w-px bg-white opacity-30 ml-[11px] mt-[1px]" />
+              </div>
+
               <button
-                key={t.id}
-                onClick={() => handleTableChange(t.id)}
-                disabled={selectedTableId === t.id}
-                className={`h-8 cursor-pointer rounded-t-xs bg-green-800 px-4 py-1 text-xs ${
-                  selectedTableId === t.id
-                    ? "rounded-b-none border-b-0 bg-white text-black"
-                    : "bg-gray-200 text-white hover:bg-green-900"
-                }`}
+                className="h-8 px-3 flex items-center cursor-pointer bg-transparent text-sm text-gray-200 hover:bg-transparent hover:text-white"
+                onClick={() => handleCreate()}
               >
-                {t.name}
-                {selectedTableId === t.id && (
-                  <ChevronDown className="ml-1 inline h-3 w-3" />
-                )}
+                <svg width="16" height="16" viewBox="0 0 16 16" className="text-white" fill="currentColor"><use href="/icons/icon_definitions.svg#Plus"></use></svg>
+                <span className="ml-2 text-[13px] font-[400] pt-[2px]">Add or import</span>
               </button>
-            ))}
-            <Button
-              className="ml-2 cursor-pointer bg-transparent pt-3 text-sm text-gray-200 hover:bg-transparent hover:text-white"
-              onClick={() => handleCreate()}
-            >
-              + Add or import
-            </Button>
+            </div>
+            
+            <div className="ml-auto flex items-center rounded-tl-sm h-8 bg-[#0a7c0e] px-4 w-[165.578px]">
+              <span className="text-white text-[13px] font-[400]">Extensions</span>
+              <span className="ml-4 text-white text-[13px] font-[400]">Tools</span>
+              <ChevronDown className="h-[16px] w-[16px] ml-1 text-white stroke-[1.5px]" />
+            </div>
+        
           </div>
+        
           <div className="border-t-0">
             {selectedTableId && selectedViewId && (
               <TableToolbar
