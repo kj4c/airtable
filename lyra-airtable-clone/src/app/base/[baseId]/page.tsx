@@ -153,7 +153,7 @@ export default function BaseDashboard() {
                     className={`h-8 cursor-pointer rounded-t-xs bg-[#0a7c0e] px-3 py-1 text-[13px] font-[400] flex items-center justify-center ${
                       selectedTableId === t.id
                         ? "rounded-b-none border-b-0 bg-white text-black font-[500]"
-                        : "text-white hover:bg-[#08700c]"
+                        : "text-white hover:bg-[#08700c] opacity-85"
                     }`}
                   >
                     <span
@@ -168,7 +168,7 @@ export default function BaseDashboard() {
                       {t.name}
                     </span>
                     {selectedTableId === t.id && (
-                      <ChevronDown className="ml-2 h-4 w-4" />
+                      <svg width="16" height="16" viewBox="0 0 16 16" className="text-black ml-1" fill="currentColor"><use href="/icons/icon_definitions.svg#ChevronDown"></use></svg>
                     )}
                   </button>
                   {idx < baseData.length - 1 && selectedTableId !== t.id && (
@@ -189,7 +189,7 @@ export default function BaseDashboard() {
                 onClick={() => handleCreate()}
               >
                 <svg width="16" height="16" viewBox="0 0 16 16" className="text-white" fill="currentColor"><use href="/icons/icon_definitions.svg#Plus"></use></svg>
-                <span className="ml-2 text-[13px] font-[400] pt-[2px]">Add or import</span>
+                <span className="ml-2 text-[13px] font-[400] pt-[2px] whitespace-nowrap">Add or import</span>
               </button>
             </div>
             
