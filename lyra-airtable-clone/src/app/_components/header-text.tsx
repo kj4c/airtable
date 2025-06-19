@@ -15,7 +15,7 @@ export function TabButton({ active, children, className }: TabButtonProps) {
           ? "bg-[#0a7c0e] text-white rounded-full shadow-[inset_0_2px_8px_rgba(0,0,0,0.15)]"
           : "bg-transparent text-white hover:bg-[#0a7c0e] hover:text-white rounded-full transition-colors cursor-pointer opacity-85"
         }
-        ${className || ""}`}
+        ${className ?? ""}`}
     >
       {children}
     </button>
