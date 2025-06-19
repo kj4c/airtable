@@ -153,7 +153,7 @@ export default function BaseDashboard() {
                   className={`h-8 cursor-pointer rounded-t-xs bg-[#0a7c0e] px-4 py-1 text-[13px] flex items-center justify-center ${
                     selectedTableId === t.id
                       ? "rounded-b-none border-b-0 bg-white text-black"
-                      : "text-white hover:bg-green-900"
+                      : "text-white hover:bg-[#08700c]"
                   }`}
                 >
                   {t.name}
