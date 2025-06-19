@@ -145,19 +145,36 @@ export default function BaseDashboard() {
         <div className="flex flex-col items-stretch bg-[#048a0e] ">
           <div className=" flex h-8 w-full items-center">
             <div className="pl-3 flex items-center bg-[#0a7c0e] w-full mr-2 rounded-t-sm">
-              {baseData?.map((t) => (
-                <button
-                  key={t.id}
-                  onClick={() => handleTableChange(t.id)}
-                  disabled={selectedTableId === t.id}
-                  className={`h-8 cursor-pointer rounded-t-xs bg-[#0a7c0e] px-4 py-1 text-[13px] flex items-center justify-center ${
-                    selectedTableId === t.id
-                      ? "rounded-b-none border-b-0 bg-white text-black"
-                      : "text-white hover:bg-[#08700c]"
-                  }`}
-                >
-                  {t.name}
-                </button>
+              {baseData?.map((t, idx) => (
+                <React.Fragment key={t.id}>
+                  <button
+                    onClick={() => handleTableChange(t.id)}
+                    disabled={selectedTableId === t.id}
+                    className={`h-8 cursor-pointer rounded-t-xs bg-[#0a7c0e] px-3 py-1 text-[13px] font-[400] flex items-center justify-center ${
+                      selectedTableId === t.id
+                        ? "rounded-b-none border-b-0 bg-white text-black font-[500]"
+                        : "text-white hover:bg-[#08700c]"
+                    }`}
+                  >
+                    <span
+                      className="
+                        truncate whitespace-nowrap inline-block
+                        min-w-[30px]
+                        max-w-[160px] sm:max-w-[200px] md:max-w-[240px]
+                        text-ellipsis
+                        text-center
+                      "
+                    >
+                      {t.name}
+                    </span>
+                    {selectedTableId === t.id && (
+                      <ChevronDown className="ml-2 h-4 w-4" />
+                    )}
+                  </button>
+                  {idx < baseData.length - 1 && selectedTableId !== t.id && (
+                    <div className="h-3 w-px bg-white opacity-30 mt-[1px]" />
+                  )}
+                </React.Fragment>
               ))}
               <div className="relative flex items-center h-8">
                 <div className="h-3 w-px bg-white opacity-30 mr-[11px] mt-[1px]" />

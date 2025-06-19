@@ -7,10 +7,10 @@ type Props = {
 
 export default function Search({ value, onChange }: Props) {
   return (
-    <Input
+    <input
       type="search"
-      placeholder="Search"
-      className="h-8 w-[200px] max-w-xs"
+      placeholder="Find in view"
+      className="h-8 px-2 py-5 font-[500] w-[300px] max-w-xs rounded-none outline-none hover:outline-none focus:outline-none"
       autoComplete="off"
       autoCorrect="off"
       spellCheck="false"
